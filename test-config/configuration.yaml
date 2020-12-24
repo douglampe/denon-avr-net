@@ -1,0 +1,9 @@
+default_config:
+
+logger:
+  default: warning
+  logs:
+    custom_components.denon_avr_net.sensor: debug
+sensor:
+  - platform: denon_avr_net
+    host: '192.168.1.34'

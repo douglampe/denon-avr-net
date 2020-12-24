@@ -80,6 +80,7 @@ class DenonNetworkSwitch(SwitchEntity):
             self._prefix = "Z{0}".format(self._zone)
         
         self._on_command = "{0}{1}\r".format(self._prefix, self._source).encode('utf-8')
+        self._off_command = "{0}?\r".format(self._prefix).encode('utf-8')
 
     async def async_added_to_hass(self):
         """Handle when an entity is about to be added to Home Assistant."""
@@ -138,8 +139,8 @@ class DenonNetworkSwitch(SwitchEntity):
 
     def turn_on(self):
         """Turn on the switch"""
-        self._client.send(self.on_command)
+        self._client.send(self._on_command)
     
     def turn_off(self):
         """Turn off the switch"""
-        self._client.send(self.off_command)
+        self._client.send(self._off_command)

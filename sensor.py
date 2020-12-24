@@ -75,7 +75,7 @@ class DenonNetworkSensor(Entity):
         loop,
     ):
         """Read the data from the connection."""
-        await client.start(loop)
+        await self._client.start(loop)
 
     def client_data_received(self, key, value, client):
         _LOGGER.debug("Data updated: %s = %s", key, value)
@@ -146,7 +146,7 @@ class DenonTcpClient(asyncio.Protocol):
             while True:
                 try:
                     on_con_lost = loop.create_future()
-                    client.request_status()
+                    self.request_status()
                     await on_con_lost
                 except Exception as exc:
                     _LOGGER.exception(

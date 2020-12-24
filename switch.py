@@ -4,11 +4,11 @@ import logging
 
 import voluptuous as vol
 
-from homeassistant.components.sensor import PLATFORM_SCHEMA
-from homeassistant.const import CONF_NAME, CONF_VALUE_TEMPLATE, EVENT_HOMEASSISTANT_STOP
+from homeassistant.components.switch import PLATFORM_SCHEMA
+from homeassistant.const import CONF_NAME, CONF_VALUE_TEMPLATE, EVENT_HOMEASSISTANT_STOP, STATE_ON, STATE_OFF
 from homeassistant.core import callback
 import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers.entity import Entity
+from homeassistant.components.switch import SwitchEntity
 
 from . import DenonTcpClient
 
@@ -16,51 +16,70 @@ _LOGGER = logging.getLogger(__name__)
 
 CONF_HOST = "host"
 CONF_PORT = "port"
+CONF_ZONE = "zone"
+CONF_SOURCE = "source"
 
-DEFAULT_NAME = "Denon AVR TCP/IP Sensor"
 DEFAULT_PORT = 23
+DEFAULT_ZONE = 1
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
+        vol.Required(CONF_NAME): cv.string,
         vol.Required(CONF_HOST): cv.string,
-        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
         vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.positive_int,
+        vol.Optional(CONF_ZONE, default=DEFAULT_ZONE): cv.positive_int,
+        vol.Required(CONF_SOURCE): cv.string,
     }
 )
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
-    """Set up the Denon AVR sensor platform."""
+    """Set up the Denon AVR Switch platform."""
     name = config.get(CONF_NAME)
     host = config.get(CONF_HOST)
     port = config.get(CONF_PORT)
+    zone = config.get(CONF_ZONE)
+    source = config.get(CONF_SOURCE)
 
-    sensor = DenonNetworkSensor(
+    switch = DenonNetworkSwitch(
         name,
         host,
         port,
+        zone,
+        source
     )
 
-    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, sensor.stop_network_read)
-    async_add_entities([sensor], True)
+    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, switch.stop_network_read)
+    async_add_entities([switch], True)
 
 
-class DenonNetworkSensor(Entity):
-    """Representation of a Denon AVR as a sensor via TCP/IP."""
+class DenonNetworkSwitch(SwitchEntity):
+    """Representation of a Denon AVR as a Switch via TCP/IP."""
 
     def __init__(
         self,
         name,
         host,
         port,
+        zone,
+        source
     ):
-        """Initialize the network sensor."""
+        """Initialize the network client."""
         self._name = name
         self._state = None
         self._host = host
         self._port = port
+        self._zone = zone
+        self._source = source
         self._network_loop_task = None
-        self._attributes = {}
+        self._attributes = None
         self._client = DenonTcpClient(self.client_data_received, host, port)
+        
+        if self._zone == 1:
+            self._prefix = "SI"
+        else:
+            self._prefix = "Z{0}".format(self._zone)
+        
+        self._on_command = "{0}{1}\r".format(self._prefix, self._source).encode('utf-8')
 
     async def async_added_to_hass(self):
         """Handle when an entity is about to be added to Home Assistant."""
@@ -78,11 +97,12 @@ class DenonNetworkSensor(Entity):
         await self._client.start(loop)
 
     def client_data_received(self, key, value, client):
-        _LOGGER.debug("Data updated: %s = %s", key, value)
-        if key == "ZONE1":
-            self._state = value.lower()
-        else:
-            self._attributes[key] = value
+        if key == "ZONE{0}_SOURCE".format(self._zone):
+            if value == self._source:
+                self._state = STATE_ON
+            else:
+                self._state = STATE_OFF
+            _LOGGER.debug("State updated: %s", self._state)
         self.async_write_ha_state()
 
     @callback
@@ -93,7 +113,7 @@ class DenonNetworkSensor(Entity):
 
     @property
     def name(self):
-        """Return the name of the sensor."""
+        """Return the name of the switch."""
         return self._name
 
     @property
@@ -108,5 +128,18 @@ class DenonNetworkSensor(Entity):
 
     @property
     def state(self):
-        """Return the state of the sensor."""
+        """Return the state of the switch."""
         return self._state
+
+    @property
+    def is_on(self):
+        """Return True if switch is on."""
+        return self._state == STATE_ON
+
+    def turn_on(self):
+        """Turn on the switch"""
+        self._client.send(self.on_command)
+    
+    def turn_off(self):
+        """Turn off the switch"""
+        self._client.send(self.off_command)

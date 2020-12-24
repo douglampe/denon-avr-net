@@ -4,6 +4,13 @@ logger:
   default: warning
   logs:
     custom_components.denon_avr_net.sensor: debug
+    custom_components.denon_avr_net.switch: debug
 sensor:
   - platform: denon_avr_net
     host: '192.168.1.34'
+switch:
+  - platform: denon_avr_net
+    name: TEST Living Xbox
+    host: '192.168.1.34'
+    zone: 1
+    source: GAME

@@ -12,9 +12,51 @@ class DenonTcpClient(asyncio.Protocol):
         self.listener = listener
         self.host = host
         self.port = port
+        self.loop = None
 
+    async def start(self, loop):
+        if loop != None:
+            self.loop = loop
+        
+        try:
+            _LOGGER.debug('Creating connection to %s:%s', self.host, self.port)
+            transport, _ = await loop.create_connection(
+                lambda: self,
+                self.host,
+                self.port,
+            )
+        except Exception as exc:
+            _LOGGER.exception(
+                "Unable to connect to the device at address %s:%s. Will retry. Error: %s",
+                self.host,
+                self.port,
+                exc,
+            )
+            await self._handle_error()
+        else:
+            while True:
+                try:
+                    on_con_lost = loop.create_future()
+                    self.request_status()
+                    await on_con_lost
+                except Exception as exc:
+                    _LOGGER.exception(
+                        "Error while reading device at address %s:%s. Error: %s", 
+                        self.host, 
+                        self.port, 
+                        exc
+                    )
+                    await self._handle_error()
+                    break
+                finally:
+                    transport.close()
+    
+    async def _handle_error(self):
+        """Handle error for TCP/IP connection."""
+        await asyncio.sleep(5)
+        
     def connection_made(self, transport):
-        _LOGGER.debug('Connection established: %s', transport)
+        _LOGGER.debug('Connection established at %s:%s: %s', self.host, self.port, transport)
 
         self.transport = transport
         
@@ -23,7 +65,7 @@ class DenonTcpClient(asyncio.Protocol):
 
     def connection_lost(self, exc):
         _LOGGER.exception("Connection lost. Attempting to reconnect. Error: %s", exc)
-        self.start()
+        asyncio.run(self.start())
 
     def data_received(self, data):
         _LOGGER.debug('Data received: %s', data.decode())
@@ -54,7 +96,7 @@ class DenonTcpClient(asyncio.Protocol):
         if command in self.commands:
             self.commands[command](*argv, **kwargs)
         else:
-            print('Command not defined: ', command)
+            _LOGGER.warning('Command not defined: %s', command)
 
     def parse(self, data):
         # Parse zone state

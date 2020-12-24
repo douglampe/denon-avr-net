@@ -23,6 +23,7 @@ DEFAULT_PORT = 23
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
         vol.Required(CONF_HOST): cv.string,
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
         vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.positive_int,
     }
 )
@@ -66,52 +67,15 @@ class DenonNetworkSensor(Entity):
         self._network_loop_task = self.hass.loop.create_task(
             self.start_read(
                 self.hass.loop,
-                self._client,
-                self._host,
-                self._port,
             )
         )
 
     async def start_read(
         self,
         loop,
-        client,
-        host,
-        port,
     ):
         """Read the data from the connection."""
-        on_con_lost = loop.create_future()
-        try:
-            _LOGGER.debug('Creating connection to %s:%s', host, port)
-            transport, _ = await loop.create_connection(
-                lambda: client,
-                host,
-                port,
-            )
-        except Exception as exc:
-            _LOGGER.exception(
-                "Unable to connect to the device at address %s:%s. Will retry. Error: %s",
-                host,
-                port,
-                exc,
-            )
-            await self._handle_error()
-        else:
-            while True:
-                try:
-                    client.request_status()
-                    await on_con_lost
-                except Exception as exc:
-                    _LOGGER.exception(
-                        "Error while reading device at address %s:%s. Error: %s", 
-                        host, 
-                        port, 
-                        exc
-                    )
-                    await self._handle_error()
-                    break
-                finally:
-                    transport.close()
+        await client.start(loop)
 
     def client_data_received(self, key, value, client):
         _LOGGER.debug("Data updated: %s = %s", key, value)
@@ -119,13 +83,7 @@ class DenonNetworkSensor(Entity):
             self._state = value.lower()
         else:
             self._attributes[key] = value
-    
-    async def _handle_error(self):
-        """Handle error for TCP/IP connection."""
-        self._state = None
-        self._attributes = {}
         self.async_write_ha_state()
-        await asyncio.sleep(5)
 
     @callback
     def stop_network_read(self, event):
@@ -163,7 +121,49 @@ class DenonTcpClient(asyncio.Protocol):
         self.listener = listener
         self.host = host
         self.port = port
+        self.loop = None
 
+    async def start(self, loop):
+        if loop != None:
+            self.loop = loop
+        
+        try:
+            _LOGGER.debug('Creating connection to %s:%s', self.host, self.port)
+            transport, _ = await loop.create_connection(
+                lambda: self,
+                self.host,
+                self.port,
+            )
+        except Exception as exc:
+            _LOGGER.exception(
+                "Unable to connect to the device at address %s:%s. Will retry. Error: %s",
+                self.host,
+                self.port,
+                exc,
+            )
+            await self._handle_error()
+        else:
+            while True:
+                try:
+                    on_con_lost = loop.create_future()
+                    client.request_status()
+                    await on_con_lost
+                except Exception as exc:
+                    _LOGGER.exception(
+                        "Error while reading device at address %s:%s. Error: %s", 
+                        self.host, 
+                        self.port, 
+                        exc
+                    )
+                    await self._handle_error()
+                    break
+                finally:
+                    transport.close()
+    
+    async def _handle_error(self):
+        """Handle error for TCP/IP connection."""
+        await asyncio.sleep(5)
+        
     def connection_made(self, transport):
         _LOGGER.debug('Connection established at %s:%s: %s', self.host, self.port, transport)
 
@@ -174,7 +174,7 @@ class DenonTcpClient(asyncio.Protocol):
 
     def connection_lost(self, exc):
         _LOGGER.exception("Connection lost. Attempting to reconnect. Error: %s", exc)
-        # self.start()
+        asyncio.run(self.start())
 
     def data_received(self, data):
         _LOGGER.debug('Data received: %s', data.decode())

@@ -80,51 +80,50 @@ class DenonNetworkSensor(Entity):
         port,
     ):
         """Read the data from the connection."""
-        on_con_lost = None
-        while True:
-            try:
-                on_con_lost = loop.create_future()
-                transport, protocol = await loop.create_connection(
-                    lambda: client,
-                    host,
-                    port,
-                )
-            except Exception as exc:
-                _LOGGER.exception(
-                    "Unable to connect to the device at address %s:%s. Will retry. Error: %s",
-                    host,
-                    port,
-                    exc,
-                )
-                await self._handle_error()
-            else:
-                _LOGGER.info("Network device %s:%s connected", host, port)
-                while True:
-                    try:
-                        await on_con_lost
-                    except Exception as exc:
-                        _LOGGER.exception(
-                            "Error while reading device at address %s:%s. Error: %s", 
-                            host, 
-                            port, 
-                            exc
-                        )
-                        await self._handle_error()
-                        break
-                    finally:
-                        transport.close()
+        on_con_lost = loop.create_future()
+        try:
+            _LOGGER.debug('Creating connection to %s:%s', host, port)
+            transport, _ = await loop.create_connection(
+                lambda: client,
+                host,
+                port,
+            )
+        except Exception as exc:
+            _LOGGER.exception(
+                "Unable to connect to the device at address %s:%s. Will retry. Error: %s",
+                host,
+                port,
+                exc,
+            )
+            await self._handle_error()
+        else:
+            while True:
+                try:
+                    client.request_status()
+                    await on_con_lost
+                except Exception as exc:
+                    _LOGGER.exception(
+                        "Error while reading device at address %s:%s. Error: %s", 
+                        host, 
+                        port, 
+                        exc
+                    )
+                    await self._handle_error()
+                    break
+                finally:
+                    transport.close()
 
     def client_data_received(self, key, value, client):
         _LOGGER.debug("Data updated: %s = %s", key, value)
         if key == "ZONE1":
-            self._state = value.lowercase()
+            self._state = value.lower()
         else:
             self._attributes[key] = value
     
     async def _handle_error(self):
         """Handle error for TCP/IP connection."""
         self._state = None
-        self._attributes = None
+        self._attributes = {}
         self.async_write_ha_state()
         await asyncio.sleep(5)
 
@@ -166,7 +165,7 @@ class DenonTcpClient(asyncio.Protocol):
         self.port = port
 
     def connection_made(self, transport):
-        _LOGGER.debug('Connection established: %s', transport)
+        _LOGGER.debug('Connection established at %s:%s: %s', self.host, self.port, transport)
 
         self.transport = transport
         
@@ -206,7 +205,7 @@ class DenonTcpClient(asyncio.Protocol):
         if command in self.commands:
             self.commands[command](*argv, **kwargs)
         else:
-            print('Command not defined: ', command)
+            _LOGGER.warning('Command not defined: %s', command)
 
     def parse(self, data):
         # Parse zone state

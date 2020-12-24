@@ -103,7 +103,7 @@ class DenonNetworkSwitch(SwitchEntity):
                 self._state = STATE_ON
             else:
                 self._state = STATE_OFF
-            _LOGGER.debug("State updated: %s", self._state)
+            _LOGGER.debug("State updated (%s): %s", self._name, self._state)
         self.async_write_ha_state()
 
     @callback

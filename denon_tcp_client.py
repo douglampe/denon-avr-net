@@ -65,11 +65,11 @@ class DenonTcpClient(asyncio.Protocol):
 
     def connection_lost(self, exc):
         _LOGGER.exception("Connection lost. Attempting to reconnect. Error: %s", exc)
-        asyncio.run(self.start())
+        asyncio.run(self.start(None))
 
     def data_received(self, data):
         _LOGGER.debug('Data received: %s', data.decode())
-        self.parse(data.decode())
+        self.parse(data.decode().strip('\r'))
 
     def send(self, data):
         if hasattr(self, 'transport'):

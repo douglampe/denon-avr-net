@@ -69,7 +69,8 @@ class DenonTcpClient(asyncio.Protocol):
 
     def data_received(self, data):
         _LOGGER.debug('Data received: %s', data.decode())
-        self.parse(data.decode().strip('\r'))
+        for token in data.decode().split('\r'):
+            self.parse(token)
 
     def send(self, data):
         if hasattr(self, 'transport'):
@@ -100,7 +101,11 @@ class DenonTcpClient(asyncio.Protocol):
 
     def parse(self, data):
         # Parse zone state
-        if data.startswith('SI'):
+        if data.startswith('PW'):
+            self.set_state('POWER', data[2:])
+        elif data.startswith('CV'):
+            self.set_zone_state('ZONE1', data)
+        elif data.startswith('SI'):
             self.set_zone_state('ZONE1', data[2:])
         elif data.startswith('Z2'):
             self.set_zone_state('ZONE2', data[2:])
@@ -108,7 +113,7 @@ class DenonTcpClient(asyncio.Protocol):
             self.set_zone_state('ZONE3', data[2:])
         # Parse max volume BEFORE main volume
         elif data.startswith('MVMAX'):
-            self.set_state('ZONE1_VOL_MAX', data[4:])
+            self.set_state('ZONE1_VOL_MAX', data[6:])
         # Parse main zone attributes
         elif data.startswith('MV'):
             self.set_state('ZONE1_VOL', data[2:])
@@ -124,22 +129,52 @@ class DenonTcpClient(asyncio.Protocol):
         # Parse zone state
         if key == 'ON' or key == 'OFF':
             self.set_state(key, state)
-        # Parse mute Zone2/3 mute
+        # Parse mute
         if state == 'MUON' or state == 'MUOFF':
             self.set_state(key + '_MUTE', state[2:])
+        # Parse quick select
+        elif state.startswith('QUICK'):
+            self.set_state(key + '_QUICK', state[-1:])
+        # Parse channel setting
+        elif state.startswith('CS'):
+            self.set_zone_state('{0}_CH_SET'.format(key), state[2:])
+        # Parse channel volume
+        elif state.startswith('CV'):
+            if state != 'CVEND' and ' ' in state:
+                # Parse channel volume
+                self.set_state('{0}_CH_VOL_{1}'.format(key, state[2:].split()[0]), state[2:].split()[1])
+        # Parse HPF
+        elif state.startswith('HPF'):
+            self.set_state('{0}_HPF'.format(key), state[3:])
         # Parse Zone2/3 volume
         elif state.isnumeric() == True:
             self.set_state(key + '_VOL', state)
-        # Otherwise this is the Zone2/3 source
+        # Otherwise this is source
         else:
             self.set_state(key + '_SOURCE', state)
 
     def request_status(self):
-        self.send(b'SI?\r')
+        self.send(b'PW?\r')
         self.send(b'MV?\r')
-        self.send(b'ZM?\r')
+        self.send(b'CV?\r')
         self.send(b'MU?\r')
+        self.send(b'SI?\r')
+        self.send(b'ZM?\r')
+        self.send(b'SR?\r')
+        self.send(b'SD?\r')
+        self.send(b'DC?\r')
+        self.send(b'SV?\r')
+        self.send(b'SLP?\r')
+        self.send(b'MS?\r')
         self.send(b'Z2?\r')
         self.send(b'Z2MU?\r')
+        self.send(b'Z2CS?\r')
+        self.send(b'Z2CV?\r')
+        self.send(b'Z2HPF?\r')
+        self.send(b'Z2QUICK ?\r')
         self.send(b'Z3?\r')
         self.send(b'Z3MU?\r')
+        self.send(b'Z3CS?\r')
+        self.send(b'Z3CV?\r')
+        self.send(b'Z3HPF?\r')
+        self.send(b'Z3QUICK ?\r')

@@ -90,15 +90,6 @@ class DenonTcpClient(asyncio.Protocol):
         else:
             return ''
 
-    def define_command(self, command, func):
-        self.commands[command] = func
-
-    def send_command(self, command, *argv, **kwargs):
-        if command in self.commands:
-            self.commands[command](*argv, **kwargs)
-        else:
-            _LOGGER.warning('Command not defined: %s', command)
-
     def parse(self, data):
         # Parse zone state
         if data.startswith('PW'):

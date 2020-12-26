@@ -127,7 +127,7 @@ class DenonTcpClient(asyncio.Protocol):
 
     def set_zone_state(self, key, state):
         # Parse zone state
-        if key == 'ON' or key == 'OFF':
+        if state == 'ON' or state == 'OFF':
             self.set_state(key, state)
         # Parse mute
         if state == 'MUON' or state == 'MUOFF':

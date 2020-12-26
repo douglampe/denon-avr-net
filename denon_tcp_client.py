@@ -102,28 +102,28 @@ class DenonTcpClient(asyncio.Protocol):
     def parse(self, data):
         # Parse zone state
         if data.startswith('PW'):
-            self.set_state('POWER', data[2:])
+            self.set_state('power', data[2:])
         elif data.startswith('CV'):
-            self.set_zone_state('ZONE1', data)
+            self.set_zone_state('zone1', data)
         elif data.startswith('SI'):
-            self.set_zone_state('ZONE1', data[2:])
+            self.set_zone_state('zone1', data[2:])
         elif data.startswith('Z2'):
-            self.set_zone_state('ZONE2', data[2:])
+            self.set_zone_state('zone2', data[2:])
         elif data.startswith('Z3'):
-            self.set_zone_state('ZONE3', data[2:])
+            self.set_zone_state('zone3', data[2:])
         # Parse max volume BEFORE main volume
         elif data.startswith('MVMAX'):
-            self.set_state('ZONE1_VOL_MAX', data[6:])
+            self.set_state('zone1_vol_max', data[6:])
         # Parse main zone attributes
         elif data.startswith('MV'):
-            self.set_state('ZONE1_VOL', data[2:])
+            self.set_state('zone1_vol', data[2:])
         elif data.startswith('MU'):
-            self.set_state('ZONE1_MUTE', data[2:])
+            self.set_state('zone1_mute', data[2:])
         elif data.startswith('ZM'):
-            self.set_state('ZONE1', data[2:])
+            self.set_state('zone1', data[2:])
         # Parse Video Select
         elif data.startswith('SV'):
-            self.set_state('VIDEO_SELECT', data[2:])
+            self.set_state('video_select', data[2:])
 
     def set_zone_state(self, key, state):
         # Parse zone state
@@ -131,27 +131,27 @@ class DenonTcpClient(asyncio.Protocol):
             self.set_state(key, state)
         # Parse mute
         if state == 'MUON' or state == 'MUOFF':
-            self.set_state(key + '_MUTE', state[2:])
+            self.set_state('{0}_mute'.format(key), state[2:])
         # Parse quick select
         elif state.startswith('QUICK'):
-            self.set_state(key + '_QUICK', state[-1:])
+            self.set_state('{0}_quick'.format(key), state[-1:])
         # Parse channel setting
         elif state.startswith('CS'):
-            self.set_zone_state('{0}_CH_SET'.format(key), state[2:])
+            self.set_zone_state('{0}_ch_set'.format(key), state[2:])
         # Parse channel volume
         elif state.startswith('CV'):
             if state != 'CVEND' and ' ' in state:
                 # Parse channel volume
-                self.set_state('{0}_CH_VOL_{1}'.format(key, state[2:].split()[0]), state[2:].split()[1])
+                self.set_state('{0}_ch_vol_{1}'.format(key, state[2:].split()[0]), state[2:].split()[1])
         # Parse HPF
         elif state.startswith('HPF'):
-            self.set_state('{0}_HPF'.format(key), state[3:])
+            self.set_state('{0}_hpf'.format(key), state[3:])
         # Parse Zone2/3 volume
         elif state.isnumeric() == True:
-            self.set_state(key + '_VOL', state)
+            self.set_state(key + '_vol', state)
         # Otherwise this is source
         else:
-            self.set_state(key + '_SOURCE', state)
+            self.set_state(key + '_source', state)
 
     def request_status(self):
         self.send(b'PW?\r')

@@ -79,7 +79,7 @@ class DenonNetworkSensor(Entity):
 
     def client_data_received(self, key, value, client):
         _LOGGER.debug("Data updated: %s = %s", key, value)
-        if key == "ZONE1":
+        if key == "power":
             self._state = value.lower()
         else:
             self._attributes[key] = value

@@ -3,7 +3,7 @@ services:
   homeassistant:
     container_name: home-assistant
     image: homeassistant/home-assistant:stable
-    network_mode: host
+    #network_mode: host
     volumes:
       - ./configuration.yaml:/config/configuration.yaml
       - ./config:/config

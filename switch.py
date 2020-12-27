@@ -97,7 +97,7 @@ class DenonNetworkSwitch(SwitchEntity):
         self._client.add_listener(self.client_data_received)
 
     def client_data_received(self, key, value, client):
-        if key == "ZONE{0}_SOURCE".format(self._zone):
+        if key == "zone{0}_source".format(self._zone):
             if value == self._source:
                 self._state = STATE_ON
             else:

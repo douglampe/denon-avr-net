@@ -5,7 +5,7 @@ import logging
 import voluptuous as vol
 
 from homeassistant.components.switch import PLATFORM_SCHEMA
-from homeassistant.const import CONF_NAME, CONF_VALUE_TEMPLATE, EVENT_HOMEASSISTANT_STOP, STATE_ON, STATE_OFF
+from homeassistant.const import CONF_NAME, CONF_VALUE_TEMPLATE, EVENT_HOMEASSISTANT_STOP, STATE_ON, STATE_OFF, CONF_HOST, CONF_PORT, CONF_SOURCE, CONF_TYPE, CONF_SWITCHES
 from homeassistant.core import callback
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.switch import SwitchEntity
@@ -15,41 +15,89 @@ from . import DenonTcpClient
 
 _LOGGER = logging.getLogger(__name__)
 
-CONF_HOST = "host"
-CONF_PORT = "port"
 CONF_ZONE = "zone"
-CONF_SOURCE = "source"
+CONF_ON_COMMAND = "on_command"
+CONF_OFF_COMMAND = "off_command"
+CONF_SOURCES = "sources"
 
 DEFAULT_PORT = 23
 DEFAULT_ZONE = 1
+
+SOURCE_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_NAME): cv.string,
+        vol.Required(CONF_ZONE): cv.positive_int,
+        vol.Required(CONF_SOURCE): cv.string
+    }
+)
+
+SWITCH_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_NAME): cv.string,
+        vol.Required(CONF_ON_COMMAND): cv.string,
+        vol.Required(CONF_OFF_COMMAND): cv.string,
+    }
+)
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
         vol.Required(CONF_NAME): cv.string,
         vol.Required(CONF_HOST): cv.string,
         vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.positive_int,
-        vol.Optional(CONF_ZONE, default=DEFAULT_ZONE): cv.positive_int,
-        vol.Required(CONF_SOURCE): cv.string,
+        vol.Optional(CONF_SOURCES, default=[]): vol.All(cv.ensure_list, [SOURCE_SCHEMA]),
+        vol.Optional(CONF_SWITCHES, default=[]): vol.All(cv.ensure_list, [SWITCH_SCHEMA]),
     }
 )
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the Denon AVR Switch platform."""
-    name = config.get(CONF_NAME)
     host = config.get(CONF_HOST)
     port = config.get(CONF_PORT)
-    zone = config.get(CONF_ZONE)
-    source = config.get(CONF_SOURCE)
+    entities = []
 
-    switch = DenonNetworkSwitch(
-        name,
-        host,
-        port,
-        zone,
-        source
-    )
+    for source_config in config[CONF_SOURCES]:
 
-    async_add_entities([switch], True)
+        name = source_config[CONF_NAME]
+        zone = source_config[CONF_ZONE]
+        source = source_config[CONF_SOURCE]
+        prefix = None
+
+        if zone == 1:
+            prefix = "SI"
+        else:
+            prefix = "Z{0}".format(zone)
+        
+        on_command = "{0}{1}".format(prefix, source)
+        off_command = "{0}?".format(prefix)
+
+        _LOGGER.debug("Switch config found: on command: %s; off command: %s", on_command, off_command)
+
+        switch = DenonNetworkSwitch(
+            name,
+            host,
+            port,
+            on_command,
+            off_command,
+            zone,
+            source
+        )
+
+        entities.append(switch)
+
+    for switch_config in config[CONF_SWITCHES]:
+        entities.append(
+            DenonNetworkSwitch(
+                switch_config[CONF_NAME],
+                host,
+                port,
+                switch_config[CONF_ON_COMMAND],
+                switch_config[CONF_OFF_COMMAND],
+                None,
+                None
+            )
+        )
+
+    async_add_entities(entities, True)
 
 class DenonNetworkSwitch(SwitchEntity):
     """Representation of a Denon AVR as a Switch via TCP/IP."""
@@ -59,6 +107,8 @@ class DenonNetworkSwitch(SwitchEntity):
         name,
         host,
         port,
+        on_command,
+        off_command,
         zone,
         source
     ):
@@ -67,20 +117,16 @@ class DenonNetworkSwitch(SwitchEntity):
         self._state = None
         self._host = host
         self._port = port
+        self._on_command = on_command
+        self._off_command = off_command
         self._zone = zone
         self._source = source
         self._network_loop_task = None
         self._attributes = None
         self._client = None
-        
-        if self._zone == 1:
-            self._prefix = "SI"
-        else:
-            self._prefix = "Z{0}".format(self._zone)
-        
-        self._on_command = "{0}{1}\r".format(self._prefix, self._source).encode('utf-8')
-        self._off_command = "{0}?\r".format(self._prefix).encode('utf-8')
 
+        _LOGGER.debug("Switch configured: on command: %s; off command: %s", self._on_command, self._off_command)
+        
     async def async_added_to_hass(self):
         """Handle when an entity is about to be added to Home Assistant."""
         if DOMAIN not in self.hass.data:
@@ -94,7 +140,10 @@ class DenonNetworkSwitch(SwitchEntity):
             return False
 
         self._client = self.hass.data[DOMAIN][self._host]['client']
-        self._client.add_listener(self.client_data_received)
+        if self._source:
+            self._client.add_listener(self.client_data_received)
+        else:
+            self._client.add_raw_listener(self.client_raw_data_received)
 
     def client_data_received(self, key, value, client):
         if key == "zone{0}_source".format(self._zone):
@@ -104,6 +153,20 @@ class DenonNetworkSwitch(SwitchEntity):
                 self._state = STATE_OFF
             _LOGGER.debug("State updated (%s): %s", self._name, self._state)
         self.async_write_ha_state()
+        
+    def client_raw_data_received(self, data, client):
+        updated = False
+        if data == '':
+            return
+        if data == self._on_command:
+            self._state = STATE_ON
+            updated = True
+        elif data == self._off_command:
+            self._state = STATE_OFF
+            updated = True
+        if updated:
+            _LOGGER.debug("State updated (%s): %s", self._name, self._state)
+            self.async_write_ha_state()
 
     @property
     def name(self):
@@ -132,8 +195,8 @@ class DenonNetworkSwitch(SwitchEntity):
 
     def turn_on(self):
         """Turn on the switch"""
-        self._client.send(self._on_command)
+        self._client.send('{0}\r'.format(self._on_command).encode('utf-8'))
     
     def turn_off(self):
         """Turn off the switch"""
-        self._client.send(self._off_command)
+        self._client.send('{0}\r'.format(self._off_command).encode('utf-8'))

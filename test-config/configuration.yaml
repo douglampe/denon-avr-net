@@ -1,27 +1,28 @@
 default_config:
 
 logger:
-  default: info
+  default: warning
   logs:
-    #custom_components.denon_avr_net: debug
+    custom_components.denon_avr_net: debug
     #custom_components.denon_avr_net.sensor: debug
-    custom_components.denon_avr_net.switch: debug
+    #custom_components.denon_avr_net.switch: debug
     #custom_components.denon_avr_net.denon_tcp_client: debug
 
 denon_avr_net:
   - host: '192.168.1.34'
 
-sensor:
-  - platform: denon_avr_net
-    host: '192.168.1.34'
 switch:
   - platform: denon_avr_net
-    name: Test Porch Alexa
+    name: 'Test Denon Net'
     host: '192.168.1.34'
-    zone: 3
-    source: CD
-  - platform: denon_avr_net
-    name: Test Porch Projector
-    host: '192.168.1.34'
-    zone: 3
-    source: AUX1
+    sources:
+      - name: Test Porch Alexa
+        zone: 3
+        source: CD
+      - name: Test Porch Projector
+        zone: 3
+        source: AUX1
+    switches:
+      - name: Test Porch Speakers
+        on_command: Z3ON
+        off_command: Z3OFF

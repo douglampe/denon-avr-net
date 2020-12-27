@@ -5,12 +5,11 @@ import asyncio
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.const import CONF_HOST, CONF_PORT
+from homeassistant.const import CONF_HOST, CONF_PORT, CONF_SWITCHES
 
 from .denon_tcp_client import DenonTcpClient
 
 DOMAIN = 'denon_avr_net'
-PLATFORMS = ['sensor', 'switch']
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -31,8 +30,7 @@ async def async_setup(hass, config):
                     'client': client
                 }
                 await client.async_added_to_hass(hass)
+
         _LOGGER.info('Data: %s', hass.data[DOMAIN])
 
-#        for platform in PLATFORMS:
-#            await hass.helpers.discovery.async_load_platform(platform, DOMAIN, {}, config)
     return True

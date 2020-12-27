@@ -13,6 +13,7 @@ class DenonTcpClient(asyncio.Protocol):
         self.queue = []
 
         self.listeners = []
+        self.raw_listeners = []
         self.host = host
         self.port = port
         self.loop = None
@@ -68,6 +69,9 @@ class DenonTcpClient(asyncio.Protocol):
     def add_listener(self, listener):
         self.listeners.append(listener)
 
+    def add_raw_listener(self, listener):
+        self.raw_listeners.append(listener)
+
     async def _handle_error(self):
         """Handle error for TCP/IP connection."""
         await asyncio.sleep(5)
@@ -87,6 +91,8 @@ class DenonTcpClient(asyncio.Protocol):
     def data_received(self, data):
         _LOGGER.debug('Data received: %s', data.decode())
         for token in data.decode().split('\r'):
+            for listener in self.raw_listeners:
+                listener(token, self)
             self.parse(token)
 
     def send(self, data):
@@ -139,7 +145,7 @@ class DenonTcpClient(asyncio.Protocol):
         if state == 'ON' or state == 'OFF':
             self.set_state(key, state)
         # Parse mute
-        if state == 'MUON' or state == 'MUOFF':
+        elif state == 'MUON' or state == 'MUOFF':
             self.set_state('{0}_mute'.format(key), state[2:])
         # Parse quick select
         elif state.startswith('QUICK'):

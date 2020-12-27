@@ -71,6 +71,7 @@ class DenonNetworkSwitch(SwitchEntity):
         self._source = source
         self._network_loop_task = None
         self._attributes = None
+        self._client = None
         
         if self._zone == 1:
             self._prefix = "SI"
@@ -82,6 +83,16 @@ class DenonNetworkSwitch(SwitchEntity):
 
     async def async_added_to_hass(self):
         """Handle when an entity is about to be added to Home Assistant."""
+        if DOMAIN not in self.hass.data:
+            _LOGGER.error("Integration %s is not configured.", DOMAIN)
+            return False
+        if self._host not in self.hass.data[DOMAIN]:
+            _LOGGER.error("Host %s not configured for integration %s.", self._host, DOMAIN)
+            return False
+        if 'client' not in self.hass.data[DOMAIN][self._host]:
+            _LOGGER.error("Client not configured for host %s and integration %s.", self._host, DOMAIN)
+            return False
+
         self._client = self.hass.data[DOMAIN][self._host]['client']
         self._client.add_listener(self.client_data_received)
 

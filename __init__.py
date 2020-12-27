@@ -32,4 +32,7 @@ async def async_setup(hass, config):
                 }
                 await client.async_added_to_hass(hass)
         _LOGGER.info('Data: %s', hass.data[DOMAIN])
+
+#        for platform in PLATFORMS:
+#            await hass.helpers.discovery.async_load_platform(platform, DOMAIN, {}, config)
     return True

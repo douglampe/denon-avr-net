@@ -19,10 +19,47 @@ git clone https://github.com/douglampe/denon-avr-net.git
 ```
 
 # Configuration
-This is a somewhat experimental integration so, it is recommended to setup the sensor first:
+In order to reduce the number of sockets used, a single client is created for each connected AVR. Therefore, you must
+configure each AVR as follows:
+
+## Platform
+```
+denon_avr_net:
+  - host: my.local.ip.address
+```
+## Switches
+There are two types of switches you can configure: source and command. Source switches are used to easily select a 
+source for a specified zone. Source switches are mutually exclusive and turning on any one will turn off all others
+for the same zone. Command switches send a command for on and off and the command must also match the status data
+in order for the switch to be updated. This works for most on/off commands such as `ZMON`/`ZMOFF` for which the
+return data matches the command data. The below example shows the configuration for both types of switches:
+
+```
+switch:
+  - platform: denon_avr_net
+    name: 'Test Denon Net'
+    host: my.local.ip.address
+    sources:
+      - name: Test Zone3 CD
+        zone: 3
+        source: CD
+      - name: Test Zone3 Aux1
+        zone: 3
+        source: AUX1
+    switches:
+      - name: Test Zone3 Power Toggle
+        on_command: Z3ON
+        off_command: Z3OFF
+```
+
+# Sensor
+This integration also supports a sensor which has a state matching the main power/standby status of the AVR. Additional
+supported data is returned as attributes for the sensor. This is a somewhat experimental integration so, it is 
+recommended to setup the sensor first. This will allow you to determine the codes for sources and commands for 
+switches.
 
 ```
 sensor:
   - platform: denon_avr_net
-    host: your.local.ip.address
+    host: my.local.ip.address
 ```

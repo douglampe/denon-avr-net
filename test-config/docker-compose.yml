@@ -8,6 +8,7 @@ services:
       - ./configuration.yaml:/config/configuration.yaml
       - ./config:/config
       - ../:/config/custom_components/denon_avr_net
+      #- ../../example-custom-config/custom_components/detailed_hello_world_push:/config/custom_components/detailed_hello_world_push
     environment:
       - TZ=America/New_York
     restart: always

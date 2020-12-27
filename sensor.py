@@ -11,6 +11,7 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity import Entity
 
 from . import DenonTcpClient
+from . import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -40,7 +41,6 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         port,
     )
 
-    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, sensor.stop_network_read)
     async_add_entities([sensor], True)
 
 
@@ -60,22 +60,10 @@ class DenonNetworkSensor(Entity):
         self._port = port
         self._network_loop_task = None
         self._attributes = {}
-        self._client = DenonTcpClient(self.client_data_received, host, port)
 
     async def async_added_to_hass(self):
         """Handle when an entity is about to be added to Home Assistant."""
-        self._network_loop_task = self.hass.loop.create_task(
-            self.start_read(
-                self.hass.loop,
-            )
-        )
-
-    async def start_read(
-        self,
-        loop,
-    ):
-        """Read the data from the connection."""
-        await self._client.start(loop)
+        self.hass.data[DOMAIN][self._host]['client'].add_listener(self.client_data_received)
 
     def client_data_received(self, key, value, client):
         _LOGGER.debug("Data updated: %s = %s", key, value)
@@ -84,12 +72,6 @@ class DenonNetworkSensor(Entity):
         else:
             self._attributes[key] = value
         self.async_write_ha_state()
-
-    @callback
-    def stop_network_read(self, event):
-        """Close resources."""
-        if self._network_loop_task:
-            self._network_loop_task.cancel()
 
     @property
     def name(self):

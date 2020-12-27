@@ -10,6 +10,7 @@ from homeassistant.core import callback
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.switch import SwitchEntity
 
+from . import DOMAIN
 from . import DenonTcpClient
 
 _LOGGER = logging.getLogger(__name__)
@@ -48,9 +49,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         source
     )
 
-    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, switch.stop_network_read)
     async_add_entities([switch], True)
-
 
 class DenonNetworkSwitch(SwitchEntity):
     """Representation of a Denon AVR as a Switch via TCP/IP."""
@@ -72,7 +71,6 @@ class DenonNetworkSwitch(SwitchEntity):
         self._source = source
         self._network_loop_task = None
         self._attributes = None
-        self._client = DenonTcpClient(self.client_data_received, host, port)
         
         if self._zone == 1:
             self._prefix = "SI"
@@ -84,18 +82,8 @@ class DenonNetworkSwitch(SwitchEntity):
 
     async def async_added_to_hass(self):
         """Handle when an entity is about to be added to Home Assistant."""
-        self._network_loop_task = self.hass.loop.create_task(
-            self.start_read(
-                self.hass.loop,
-            )
-        )
-
-    async def start_read(
-        self,
-        loop,
-    ):
-        """Read the data from the connection."""
-        await self._client.start(loop)
+        self._client = self.hass.data[DOMAIN][self._host]['client']
+        self._client.add_listener(self.client_data_received)
 
     def client_data_received(self, key, value, client):
         if key == "ZONE{0}_SOURCE".format(self._zone):
@@ -105,12 +93,6 @@ class DenonNetworkSwitch(SwitchEntity):
                 self._state = STATE_OFF
             _LOGGER.debug("State updated (%s): %s", self._name, self._state)
         self.async_write_ha_state()
-
-    @callback
-    def stop_network_read(self, event):
-        """Close resources."""
-        if self._network_loop_task:
-            self._network_loop_task.cancel()
 
     @property
     def name(self):

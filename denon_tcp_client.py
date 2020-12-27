@@ -1,26 +1,40 @@
 import asyncio
 import logging
 
+from homeassistant.const import EVENT_HOMEASSISTANT_STOP
+from homeassistant.core import callback
+
 _LOGGER = logging.getLogger(__name__)
 
 class DenonTcpClient(asyncio.Protocol):
-    def __init__(self, listener, host, port):
+    def __init__(self, host, port):
         self.states = {}
         self.commands = {}
         self.queue = []
 
-        self.listener = listener
+        self.listeners = []
         self.host = host
         self.port = port
         self.loop = None
 
-    async def start(self, loop):
-        if loop != None:
-            self.loop = loop
-        
+    async def async_added_to_hass(self, hass):
+        """Handle when an entity is about to be added to Home Assistant."""
+        self.loop = hass.loop
+        self._network_loop_task = hass.loop.create_task(
+            self.start()
+        )
+        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, self.stop_network_read)
+
+    @callback
+    def stop_network_read(self, event):
+        """Close resources."""
+        if self._network_loop_task:
+            self._network_loop_task.cancel()
+
+    async def start(self):
         try:
             _LOGGER.debug('Creating connection to %s:%s', self.host, self.port)
-            transport, _ = await loop.create_connection(
+            transport, _ = await self.loop.create_connection(
                 lambda: self,
                 self.host,
                 self.port,
@@ -36,7 +50,7 @@ class DenonTcpClient(asyncio.Protocol):
         else:
             while True:
                 try:
-                    on_con_lost = loop.create_future()
+                    on_con_lost = self.loop.create_future()
                     self.request_status()
                     await on_con_lost
                 except Exception as exc:
@@ -51,6 +65,9 @@ class DenonTcpClient(asyncio.Protocol):
                 finally:
                     transport.close()
     
+    def add_listener(self, listener):
+        self.listeners.append(listener)
+
     async def _handle_error(self):
         """Handle error for TCP/IP connection."""
         await asyncio.sleep(5)
@@ -65,7 +82,7 @@ class DenonTcpClient(asyncio.Protocol):
 
     def connection_lost(self, exc):
         _LOGGER.exception("Connection lost. Attempting to reconnect. Error: %s", exc)
-        asyncio.run(self.start(None))
+        asyncio.run(self.start())
 
     def data_received(self, data):
         _LOGGER.debug('Data received: %s', data.decode())
@@ -82,7 +99,8 @@ class DenonTcpClient(asyncio.Protocol):
     def set_state(self, key, value):
         self.states[key] = value
         _LOGGER.debug('STATE SET: %s = %s', key, value)
-        self.listener(key, value, self)
+        for listener in self.listeners:
+            listener(key, value, self)
     
     def get_state(self, key):
         if key in self.states:

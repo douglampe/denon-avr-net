@@ -5,7 +5,8 @@ import logging
 import voluptuous as vol
 
 from homeassistant.components.switch import PLATFORM_SCHEMA
-from homeassistant.const import CONF_NAME, CONF_VALUE_TEMPLATE, EVENT_HOMEASSISTANT_STOP, STATE_ON, STATE_OFF, CONF_HOST, CONF_PORT, CONF_SOURCE, CONF_TYPE, CONF_SWITCHES
+from homeassistant.const import CONF_NAME, CONF_VALUE_TEMPLATE, EVENT_HOMEASSISTANT_STOP, STATE_ON, STATE_OFF
+from homeassistant.const import CONF_HOST, CONF_PORT, CONF_SOURCE, CONF_TYPE, CONF_SWITCHES, CONF_ICON
 from homeassistant.core import callback
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.switch import SwitchEntity
@@ -21,13 +22,13 @@ CONF_OFF_COMMAND = "off_command"
 CONF_SOURCES = "sources"
 
 DEFAULT_PORT = 23
-DEFAULT_ZONE = 1
 
 SOURCE_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_NAME): cv.string,
         vol.Required(CONF_ZONE): cv.positive_int,
         vol.Required(CONF_SOURCE): cv.string
+        vol.Optional(CONF_ICON): cv.string,
     }
 )
 
@@ -36,6 +37,7 @@ SWITCH_SCHEMA = vol.Schema(
         vol.Required(CONF_NAME): cv.string,
         vol.Required(CONF_ON_COMMAND): cv.string,
         vol.Required(CONF_OFF_COMMAND): cv.string,
+        vol.Optional(CONF_ICON): cv.string,
     }
 )
 
@@ -60,6 +62,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         name = source_config[CONF_NAME]
         zone = source_config[CONF_ZONE]
         source = source_config[CONF_SOURCE]
+        icon = source_config[CONF_ICON]
         prefix = None
 
         if zone == 1:
@@ -78,6 +81,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
             port,
             on_command,
             off_command,
+            icon,
             zone,
             source
         )
@@ -92,6 +96,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
                 port,
                 switch_config[CONF_ON_COMMAND],
                 switch_config[CONF_OFF_COMMAND],
+                switch_config[CONF_ICON]
                 None,
                 None
             )

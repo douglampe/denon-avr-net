@@ -96,7 +96,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
                 port,
                 switch_config[CONF_ON_COMMAND],
                 switch_config[CONF_OFF_COMMAND],
-                switch_config[CONF_ICON]
+                switch_config[CONF_ICON],
                 None,
                 None
             )

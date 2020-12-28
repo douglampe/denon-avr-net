@@ -114,6 +114,7 @@ class DenonNetworkSwitch(SwitchEntity):
         port,
         on_command,
         off_command,
+        icon,
         zone,
         source
     ):
@@ -124,6 +125,7 @@ class DenonNetworkSwitch(SwitchEntity):
         self._port = port
         self._on_command = on_command
         self._off_command = off_command
+        self._icon = icon
         self._zone = zone
         self._source = source
         self._network_loop_task = None
@@ -197,6 +199,10 @@ class DenonNetworkSwitch(SwitchEntity):
     def is_on(self):
         """Return True if switch is on."""
         return self._state == STATE_ON
+
+    @property
+    def icon(self):
+        return self._icon
 
     def turn_on(self):
         """Turn on the switch"""

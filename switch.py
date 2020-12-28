@@ -62,7 +62,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         name = source_config[CONF_NAME]
         zone = source_config[CONF_ZONE]
         source = source_config[CONF_SOURCE]
-        icon = source_config[CONF_ICON]
+        icon = source_config[CONF_ICON] if CONF_ICON in source_config else None
         prefix = None
 
         if zone == 1:
@@ -96,7 +96,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
                 port,
                 switch_config[CONF_ON_COMMAND],
                 switch_config[CONF_OFF_COMMAND],
-                switch_config[CONF_ICON],
+                switch_config[CONF_ICON] if CONF_ICON in switch_config else None,
                 None,
                 None
             )

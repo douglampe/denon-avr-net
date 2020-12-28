@@ -27,7 +27,7 @@ SOURCE_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_NAME): cv.string,
         vol.Required(CONF_ZONE): cv.positive_int,
-        vol.Required(CONF_SOURCE): cv.string
+        vol.Required(CONF_SOURCE): cv.string,
         vol.Optional(CONF_ICON): cv.string,
     }
 )

@@ -1,0 +1,3 @@
+test-config/secrets.yaml
+test-config/config
+**/*.pyc

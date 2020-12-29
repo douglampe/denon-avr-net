@@ -1,0 +1,118 @@
+default_config:
+
+logger:
+  default: warning
+  logs:
+    custom_components.denon_avr_net: debug
+
+denon_avr_net:
+  - host: !secret avr_host
+
+sensor:
+  - platform: denon_avr_net
+    name: 'Test Dnon Net'
+    host: !secret avr_host
+switch:
+  - platform: denon_avr_net
+    host: !secret avr_host
+    sources:
+      - name: Test Porch Alexa
+        zone: 3
+        source: CD
+      - name: Test Porch Projector
+        zone: 3
+        source: AUX1
+light:
+  - platform: denon_avr_net
+    host: !secret avr_host
+    lights:
+      - name: Test Main Zone Power and Volume
+        icon: hass:speaker-multiple
+        on_command: ZMON
+        off_command: ZMOFF
+        level_prefix: MV
+        min: 0
+        max: 99
+      - name: Test Zone 2 Power and Volume
+        icon: hass:speaker-multiple
+        on_command: Z2ON
+        off_command: Z2OFF
+        level_prefix: Z2
+        min: 0
+        max: 99
+      - name: Test Zone 3 Power and Volume
+        icon: hass:speaker-multiple
+        on_command: Z3ON
+        off_command: Z3OFF
+        level_prefix: Z3
+        min: 0
+        max: 99
+media_player:
+  - platform: denon_avr_net
+    host: !secret avr_host
+    sources:
+      - name: Alexa
+        source: CD
+      - name: XBox
+        source: GAME
+      - name: Fire TV
+        source: SAT/CBL
+      - name: AppleTV
+        source: DVD
+      - name: Blue-ray
+        source: BD
+      - name: HEOS Music
+        source: NET
+      - name: PlayStation
+        source: MPLAY
+      - name: pi
+        source: AUX2
+      - name: Projector
+        source: AUX1
+      - name: Tuner
+        source: TUNER
+      - name: TV Audio
+        source: SOURCE
+      - name: Phono
+        source: PHONO
+    zones:
+      - name: Test Main Zone
+        on_command: ZMON
+        off_command: ZMOFF
+        mute_on_command: MUON
+        mute_off_command: MUOFF
+        vol_up_command: MVUP
+        vol_down_command: MVDOWN
+        vol_prefix: MV
+        source_prefix: SI
+      - name: Test Zone 2
+        on_command: Z2ON
+        off_command: Z2OFF
+        mute_on_command: Z2MUON
+        mute_off_command: Z2MUOFF
+        vol_up_command: Z2UP
+        vol_down_command: Z2DOWN
+        vol_prefix: Z2
+        source_prefix: Z2
+      - name: Test Zone 3
+        on_command: Z3ON
+        off_command: Z3OFF
+        mute_on_command: Z3MUON
+        mute_off_command: Z3MUOFF
+        vol_up_command: Z3UP
+        vol_down_command: Z3DOWN
+        vol_prefix: Z3
+        source_prefix: Z3
+        sources:
+          - name: Alexa
+            source: CD
+          - name: Projector
+            source: AUX1
+          - name: HEOS Music
+            source: NET
+          - name: Phono
+            source: PHONO
+          - name: PlayStation
+            source: MPLAY
+          - name: Tuner
+            source: TUNER

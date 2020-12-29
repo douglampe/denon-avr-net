@@ -62,12 +62,28 @@ light:
     name: 'Test Denon Net'
     host: my.local.ip.address
     lights:
-      - name: Test Zone3 Power and Volume
+      - name: Test Main Zone Power and Volume
+        icon: hass:speaker-multiple
+        on_command: ZMON
+        off_command: ZMOFF
+        level_prefix: MV
+        min: 0
+        max: 99
+      - name: Test Zone 2 Power and Volume
+        icon: hass:speaker-multiple
+        on_command: Z2ON
+        off_command: Z2OFF
+        level_prefix: Z2
+        min: 0
+        max: 99
+      - name: Test Zone 3 Power and Volume
+        icon: hass:speaker-multiple
         on_command: Z3ON
         off_command: Z3OFF
         level_prefix: Z3
         min: 0
         max: 99
+
 ```
 
 ## Sensor

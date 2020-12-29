@@ -52,7 +52,25 @@ switch:
         off_command: Z3OFF
 ```
 
-# Sensor
+## Light
+For integer values with a min/max level, you can configure a light and use the brightness to control the level. This
+works great for zone volume.
+
+```
+light:
+  - platform: denon_avr_net
+    name: 'Test Denon Net'
+    host: my.local.ip.address
+    lights:
+      - name: Test Zone3 Power and Volume
+        on_command: Z3ON
+        off_command: Z3OFF
+        level_prefix: Z3
+        min: 0
+        max: 99
+```
+
+## Sensor
 This integration also supports a sensor which has a state matching the main power/standby status of the AVR. Additional
 supported data is returned as attributes for the sensor. This is a somewhat experimental integration so, it is 
 recommended to setup the sensor first. This will allow you to determine the codes for sources and commands for 

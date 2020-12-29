@@ -86,7 +86,9 @@ class DenonTcpClient(asyncio.Protocol):
 
     def connection_lost(self, exc):
         _LOGGER.exception("Connection lost. Attempting to reconnect. Error: %s", exc)
-        asyncio.run(self.start())
+        self.loop.create_task(
+            self.start()
+        )
 
     def data_received(self, data):
         _LOGGER.debug('Data received: %s', data.decode())

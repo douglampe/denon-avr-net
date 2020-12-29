@@ -204,6 +204,14 @@ class DenonNetworkSwitch(SwitchEntity):
     def icon(self):
         return self._icon
 
+    @property
+    def on_command(self):
+        return self._on_command
+
+    @property
+    def off_command(self):
+        return self._off_command
+
     def turn_on(self):
         """Turn on the switch"""
         self._client.send('{0}\r'.format(self._on_command).encode('utf-8'))

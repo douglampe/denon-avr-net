@@ -6,6 +6,7 @@ services:
     #network_mode: host
     volumes:
       - ./configuration.yaml:/config/configuration.yaml
+      - ./secrets.yaml:/config/secrets.yaml
       - ./config:/config
       - ../:/config/custom_components/denon_avr_net
       #- ../../example-custom-config/custom_components/detailed_hello_world_push:/config/custom_components/detailed_hello_world_push

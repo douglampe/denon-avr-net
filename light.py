@@ -4,7 +4,7 @@ import logging
 
 import voluptuous as vol
 
-from homeassistant.components.light import PLATFORM_SCHEMA, SUPPORT_BRIGHTNESS, ATTR_BRIGHTNESS, ATTR_BRIGHTNESS, VALID_BRIGHTNESS
+from homeassistant.components.light import PLATFORM_SCHEMA, SUPPORT_BRIGHTNESS, ATTR_BRIGHTNESS, VALID_BRIGHTNESS
 from homeassistant.const import CONF_NAME, STATE_ON, STATE_OFF, SERVICE_TURN_ON
 from homeassistant.const import CONF_HOST, CONF_PORT, CONF_LIGHTS, CONF_ICON
 from homeassistant.core import callback
@@ -105,7 +105,6 @@ class DenonNetworkLight(DenonNetworkSwitch):
         self._min = min
         self._max = max
         self._network_loop_task = None
-        self._attributes = None
         self._client = None
         self._brightness = None
         self._attributes = {}
@@ -171,11 +170,14 @@ class DenonNetworkLight(DenonNetworkSwitch):
             self.set_brightness(brightness)
             raw_value = int(self._brightness * (self._max - self._min) / 255 + self._min)
             _LOGGER.debug('Sending command %s%s', self._level_prefix, raw_value)
-            self._client.send('{0}{1}\r'.format(self._level_prefix, raw_value).encode('utf-8'))
+            self._client.send('{0}{1:02d}\r'.format(self._level_prefix, raw_value).encode('utf-8'))
 
     def set_brightness(self, brightness):
         _LOGGER.debug('Setting brightness to %s', brightness)
         self._brightness = brightness
-        self._attributes = {
-            ATTR_BRIGHTNESS: brightness
+        self.update()
+    
+    def update(self):
+        _attributes = {
+            ATTR_BRIGHTNESS: self._brightness
         }

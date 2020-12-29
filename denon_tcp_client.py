@@ -94,7 +94,11 @@ class DenonTcpClient(asyncio.Protocol):
         _LOGGER.debug('Data received: %s', data.decode())
         for token in data.decode().split('\r'):
             for listener in self.raw_listeners:
-                listener(token, self)
+                try:
+                    listener(token, self)
+                except Exception as err:
+                    _LOGGER.error('Error invoking raw listener: %s', err)
+
             self.parse(token)
 
     def send(self, data):
@@ -108,7 +112,10 @@ class DenonTcpClient(asyncio.Protocol):
         self.states[key] = value
         _LOGGER.debug('STATE SET: %s = %s', key, value)
         for listener in self.listeners:
-            listener(key, value, self)
+            try:
+                listener(key, value, self)
+            except Exception as err:
+                _LOGGER.error('Error invoking raw listener: %s', err)
     
     def get_state(self, key):
         if key in self.states:

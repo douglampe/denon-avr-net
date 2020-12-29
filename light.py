@@ -38,7 +38,6 @@ LIGHT_SCHEMA = vol.Schema(
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
-        vol.Required(CONF_NAME): cv.string,
         vol.Required(CONF_HOST): cv.string,
         vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.positive_int,
         vol.Optional(CONF_LIGHTS, default=[]): vol.All(cv.ensure_list, [LIGHT_SCHEMA]),

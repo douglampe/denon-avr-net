@@ -14,7 +14,6 @@ sensor:
     host: !secret avr_host
 switch:
   - platform: denon_avr_net
-    name: 'Test Denon Net'
     host: !secret avr_host
     sources:
       - name: Test Porch Alexa
@@ -25,7 +24,6 @@ switch:
         source: AUX1
 light:
   - platform: denon_avr_net
-    name: 'Test Denon Net'
     host: !secret avr_host
     lights:
       - name: Test Main Zone Power and Volume
@@ -51,19 +49,32 @@ light:
         max: 99
 media_player:
   - platform: denon_avr_net
-    name: 'Test Denon Net'
     host: !secret avr_host
     sources:
+      - name: Alexa
+        source: CD
       - name: XBox
         source: GAME
       - name: Fire TV
         source: SAT/CBL
+      - name: AppleTV
+        source: DVD
       - name: Blue-ray
         source: BD
+      - name: HEOS Music
+        source: NET
+      - name: PlayStation
+        source: MPLAY
+      - name: pi
+        source: AUX2
       - name: Projector
         source: AUX1
-      - name: Bluetooth
-        source: NET
+      - name: Tuner
+        source: TUNER
+      - name: TV Audio
+        source: SOURCE
+      - name: Phono
+        source: PHONO
     zones:
       - name: Test Main Zone
         on_command: ZMON
@@ -93,7 +104,15 @@ media_player:
         vol_prefix: Z3
         source_prefix: Z3
         sources:
+          - name: Alexa
+            source: CD
           - name: Projector
             source: AUX1
-          - name: Bluetooth
+          - name: HEOS Music
             source: NET
+          - name: Phono
+            source: PHONO
+          - name: PlayStation
+            source: MPLAY
+          - name: Tuner
+            source: TUNER

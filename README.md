@@ -40,8 +40,7 @@ and volume up/down. You must also supply the prefix for setting the volume level
 ```
 media_player:
   - platform: denon_avr_net
-    name: 'Test Denon Net'
-    host: !secret avr_host
+    host: my.local.ip.address
     sources:
       - name: XBox
         source: GAME
@@ -98,7 +97,6 @@ return data matches the command data. The below example shows the configuration 
 ```
 switch:
   - platform: denon_avr_net
-    name: 'Test Denon Net'
     host: my.local.ip.address
     sources:
       - name: Test Zone3 CD
@@ -120,7 +118,6 @@ works great for zone volume.
 ```
 light:
   - platform: denon_avr_net
-    name: 'Test Denon Net'
     host: my.local.ip.address
     lights:
       - name: Test Main Zone Power and Volume
@@ -156,5 +153,6 @@ switches.
 ```
 sensor:
   - platform: denon_avr_net
+    name: Denon AVR Net Sensor
     host: my.local.ip.address
 ```

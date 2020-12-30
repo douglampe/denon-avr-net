@@ -252,8 +252,12 @@ class DenonNetworkMediaPlayer(MediaPlayerEntity):
         self._client.send('{0}\r'.format(self._vol_down_command).encode('utf-8'))
 
     def set_volume_level(self, volume):
-        raw_value = int(self._volume * (self._max - self._min) + self._min)
-        self._client.send('{0}{1:02d}\r'.format(self._source_prefix, raw_value).encode('utf-8'))
+        raw_value = int(volume * (self._max - self._min) + self._min)
+        if raw_value > self._max:
+            raw_value = self._max
+        elif raw_value < self._min:
+            raw_value = self._min
+        self._client.send('{0}{1:02d}\r'.format(self._vol_prefix, raw_value).encode('utf-8'))
 
     @property
     def icon(self):

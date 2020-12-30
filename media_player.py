@@ -197,7 +197,8 @@ class DenonNetworkMediaPlayer(MediaPlayerEntity):
         elif data.startswith(self._vol_prefix):
             raw_value = data[len(self._source_prefix):]
             if raw_value.isnumeric() == True:
-                self.set_volume((int(raw_value) - self._min) / (self._max - self._min))
+                int_value = int(raw_value) if len(raw_value) == 2 else int(raw_value) / 10
+                self.set_volume((int_value - self._min) / (self._max - self._min))
                 updated = True
                 _LOGGER.debug('%s Volume: %s', self._name, self._volume)
         elif data.startswith(self._source_prefix) and updated == False:

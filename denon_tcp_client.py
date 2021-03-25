@@ -202,3 +202,7 @@ class DenonTcpClient(asyncio.Protocol):
         self.send(b'Z3CV?\r')
         self.send(b'Z3HPF?\r')
         self.send(b'Z3QUICK ?\r')
+        self.send(b'SSSPC ?\r')
+        self.send(b'PSCLV ?\r')
+        self.send(b'PSSWL ?\r')
+        self.send(b'SSLEV ?\r')

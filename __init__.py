@@ -26,6 +26,9 @@ async def async_setup(hass, config):
                     port = 23
                 _LOGGER.info('Setting up %s on host: %s:', DOMAIN, host)
                 client = DenonTcpClient(host, port)
+                
+                hass.services.register(DOMAIN, "raw_command", client.handle_raw_command)
+
                 hass.data[DOMAIN][host] = {
                     'client': client
                 }

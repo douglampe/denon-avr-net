@@ -41,8 +41,6 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         port,
     )
 
-    hass.services.register(DOMAIN, "raw_command", sensor.handle_raw_command)
-
     async_add_entities([sensor], True)
 
 
@@ -86,9 +84,6 @@ class DenonNetworkSensor(Entity):
         else:
             self._attributes[key] = value
         self.async_write_ha_state()
-
-    def handle_raw_command(call):
-        self._client.handle_raw_command(call)
 
     @property
     def name(self):

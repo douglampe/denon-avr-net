@@ -18,7 +18,7 @@ DEFAULT_COMMAND = 'SI?'
 
 _LOGGER = logging.getLogger(__name__)
 
-async def async setup(hass, config):
+async def async_setup(hass, config):
 
     def handle_raw_command(call):
         host = call.data.get(ATTR_HOST, DEFAULT_HOST)

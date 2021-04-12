@@ -20,6 +20,7 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup(hass, config):
 
+    @callback
     def handle_raw_command(call):
         host = call.data.get(ATTR_HOST, DEFAULT_HOST)
 

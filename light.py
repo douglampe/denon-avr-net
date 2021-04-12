@@ -21,6 +21,7 @@ CONF_OFF_COMMAND = "off_command"
 CONF_LEVEL_PREFIX = "level_prefix"
 CONF_MIN = "min"
 CONF_MAX = "max"
+CONF_SPACE_AFTER_PREFIX = "space_after_prefix"
 
 DEFAULT_PORT = 23
 
@@ -33,6 +34,7 @@ LIGHT_SCHEMA = vol.Schema(
         vol.Optional(CONF_ICON): cv.string,
         vol.Required(CONF_MIN): cv.positive_int,
         vol.Required(CONF_MAX): cv.positive_int,
+        vol.Optional(CONF_SPACE_AFTER_PREFIX): cv.boolean,
     }
 )
 
@@ -62,6 +64,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
                 light_config[CONF_MIN],
                 light_config[CONF_MAX],
                 light_config[CONF_ICON] if CONF_ICON in light_config else None,
+                light_config[CONF_SPACE_AFTER_PREFIX] if CONF_SPACE_AFTER_PREFIX in light_config else False
             )
         )
 
@@ -95,8 +98,9 @@ class DenonNetworkLight(DenonNetworkSwitch):
         min,
         max,
         icon,
+        space_after_prefix
     ):
-        """Initialize the network client."""
+        """Initialize the switch."""
         self._state = None
         self._host = host
         self._port = port
@@ -107,6 +111,7 @@ class DenonNetworkLight(DenonNetworkSwitch):
         self._client = None
         self._brightness = None
         self._attributes = {}
+        self._space_after_prefix = False
 
         DenonNetworkSwitch.__init__(self, name, host, port, on_command, off_command, icon, None, None)
 
@@ -169,7 +174,7 @@ class DenonNetworkLight(DenonNetworkSwitch):
             self.set_brightness(brightness)
             raw_value = int(self._brightness * (self._max - self._min) / 255 + self._min)
             _LOGGER.debug('Sending command %s%s', self._level_prefix, raw_value)
-            self._client.send('{0}{1:02d}\r'.format(self._level_prefix, raw_value).encode('utf-8'))
+            self._client.send('{0}{1}{2:02d}\r'.format(self._level_prefix, ' ' if self._space_after_prefix else '', raw_value).encode('utf-8'))
 
     def set_brightness(self, brightness):
         _LOGGER.debug('Setting brightness to %s', brightness)

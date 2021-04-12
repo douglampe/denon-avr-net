@@ -32,21 +32,29 @@ light:
         off_command: ZMOFF
         level_prefix: MV
         min: 0
-        max: 99
+        max: 98
       - name: Test Zone 2 Power and Volume
         icon: hass:speaker-multiple
         on_command: Z2ON
         off_command: Z2OFF
         level_prefix: Z2
         min: 0
-        max: 99
+        max: 98
       - name: Test Zone 3 Power and Volume
         icon: hass:speaker-multiple
         on_command: Z3ON
         off_command: Z3OFF
         level_prefix: Z3
         min: 0
-        max: 99
+        max: 98
+      - name: Test Main Zone power and Center Channel Level
+        icon: hass:speaker
+        on_command: ZMON
+        off_command: ZMOFF
+        level_prefix: CVC
+        space_after_prefix: true
+        min: 38
+        max: 62
 media_player:
   - platform: denon_avr_net
     host: !secret avr_host

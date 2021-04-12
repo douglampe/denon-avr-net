@@ -111,7 +111,7 @@ class DenonNetworkLight(DenonNetworkSwitch):
         self._client = None
         self._brightness = None
         self._attributes = {}
-        self._space_after_prefix = False
+        self._space_after_prefix = space_after_prefix
 
         DenonNetworkSwitch.__init__(self, name, host, port, on_command, off_command, icon, None, None)
 
@@ -143,7 +143,7 @@ class DenonNetworkLight(DenonNetworkSwitch):
             self._state = STATE_OFF
             updated = True
         elif data.startswith(self._level_prefix):
-            level_str = data[len(self._level_prefix):]
+            level_str = data[len(self._level_prefix) + (1 if self._space_after_prefix else 0):]
             if level_str.isnumeric() == True:
                 raw_value = int(level_str)
                 self.set_brightness(int(255 * (raw_value - self._min) / (self._max - self._min)))
@@ -173,7 +173,7 @@ class DenonNetworkLight(DenonNetworkSwitch):
         if brightness != self._brightness:
             self.set_brightness(brightness)
             raw_value = int(self._brightness * (self._max - self._min) / 255 + self._min)
-            _LOGGER.debug('Sending command %s%s', self._level_prefix, raw_value)
+            _LOGGER.debug('Sending command %s%s%s', self._level_prefix, ' ' if self._space_after_prefix else '', raw_value)
             self._client.send('{0}{1}{2:02d}\r'.format(self._level_prefix, ' ' if self._space_after_prefix else '', raw_value).encode('utf-8'))
 
     def set_brightness(self, brightness):

@@ -113,7 +113,8 @@ switch:
 
 ## Light
 For integer values with a min/max level, you can configure a light and use the brightness to control the level. This
-works great for zone volume.
+works great for zone volume. Some commands require a space between the command and the level. Set the value of the
+`space_after_prefix` config to `true` to send a space between the command and the level value.
 
 ```
 light:
@@ -141,6 +142,14 @@ light:
         level_prefix: Z3
         min: 0
         max: 99
+      - name: Test Zone 3 power and center channel volume
+        icon: hass:speaker
+        on_command: ZMON
+        off_command: ZMOFF
+        level_prefix: CVC
+        space_after_prefix: true
+        min: 38
+        max: 62
 
 ```
 

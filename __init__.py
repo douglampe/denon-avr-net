@@ -20,12 +20,12 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_setup(hass, config):
 
-    def handle_raw_command:
+    def handle_raw_command(call):
         host = call.data.get(ATTR_HOST, DEFAULT_HOST)
 
-        if host != DEFAULT_HOST
+        if host != DEFAULT_HOST:
             command = call.data.get(ATTR_COMMAND, DEFAULT_COMMAND)
-            client = self.hass.data[DOMAIN][host]['client']
+            client = hass.data[DOMAIN][host]['client']
             client.send('{0}\r'.format(command).encode('utf-8'))
 
     hass.data.setdefault(DOMAIN, {})

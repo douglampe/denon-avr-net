@@ -6,9 +6,6 @@ from homeassistant.core import callback
 
 _LOGGER = logging.getLogger(__name__)
 
-ATTR_COMMAND = "command"
-DEFAULT_COMMAND = "SI?"
-
 class DenonTcpClient(asyncio.Protocol):
     def __init__(self, host, port):
         self.states = {}
@@ -78,12 +75,7 @@ class DenonTcpClient(asyncio.Protocol):
     async def _handle_error(self):
         """Handle error for TCP/IP connection."""
         await asyncio.sleep(5)
-    
-    def handle_raw_command(call):
-        command = call.data.get(ATTR_COMMAND, DEFAULT_COMMAND)
-
-        self.send('{0}\r'.format(command).encode('utf-8'))
-        
+            
     def connection_made(self, transport):
         _LOGGER.debug('Connection established at %s:%s: %s', self.host, self.port, transport)
 

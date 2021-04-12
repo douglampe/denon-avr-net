@@ -11,9 +11,23 @@ from .denon_tcp_client import DenonTcpClient
 
 DOMAIN = 'denon_avr_net'
 
+ATTR_HOST = 'host'
+ATTR_COMMAND = 'command'
+DEFAULT_HOST = 'none'
+DEFAULT_COMMAND = 'SI?'
+
 _LOGGER = logging.getLogger(__name__)
 
 async def async_setup(hass, config):
+
+    def handle_raw_command:
+        host = call.data.get(ATTR_HOST, DEFAULT_HOST)
+
+        if host != DEFAULT_HOST
+            command = call.data.get(ATTR_COMMAND, DEFAULT_COMMAND)
+            client = self.hass.data[DOMAIN][host]['client']
+            client.send('{0}\r'.format(command).encode('utf-8'))
+
     hass.data.setdefault(DOMAIN, {})
 
     if DOMAIN in config:
@@ -27,13 +41,13 @@ async def async_setup(hass, config):
                 _LOGGER.info('Setting up %s on host: %s:', DOMAIN, host)
                 client = DenonTcpClient(host, port)
                 
-                hass.services.register(DOMAIN, "raw_command", client.handle_raw_command)
-
                 hass.data[DOMAIN][host] = {
                     'client': client
                 }
                 await client.async_added_to_hass(hass)
 
         _LOGGER.info('Data: %s', hass.data[DOMAIN])
+
+    hass.services.register(DOMAIN, "raw_command", handle_raw_command)
 
     return True

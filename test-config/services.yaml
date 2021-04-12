@@ -1,0 +1,9 @@
+raw_command:
+  description: Send a raw command to a Denon AVR
+  fields:
+    host:
+      description: IP address of the AVR
+      example: "192.168.1.30"
+    command:
+      description: Command to send to the AVR
+      example: "ZMON"

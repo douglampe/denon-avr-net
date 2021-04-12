@@ -99,6 +99,9 @@ class DenonTcpClient(asyncio.Protocol):
                 except Exception as err:
                     _LOGGER.error('Error invoking raw listener: %s', err)
 
+            if token != '':
+                self.set_state('raw_command', token)
+            
             self.parse(token)
 
     def send(self, data):
@@ -148,7 +151,7 @@ class DenonTcpClient(asyncio.Protocol):
         # Parse Video Select
         elif data.startswith('SV'):
             self.set_state('video_select', data[2:])
-
+        
     def set_zone_state(self, key, state):
         # Parse zone state
         if state == 'ON' or state == 'OFF':

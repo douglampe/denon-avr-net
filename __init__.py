@@ -18,7 +18,7 @@ DEFAULT_COMMAND = 'SI?'
 
 _LOGGER = logging.getLogger(__name__)
 
-def setup(hass, config):
+async def async setup(hass, config):
 
     def handle_raw_command(call):
         host = call.data.get(ATTR_HOST, DEFAULT_HOST)
@@ -28,7 +28,7 @@ def setup(hass, config):
             client = hass.data[DOMAIN][host]['client']
             client.send('{0}\r'.format(command).encode('utf-8'))
 
-    hass.services.register(DOMAIN, "raw_command", handle_raw_command)
+    await hass.services.async_register(DOMAIN, "raw_command", handle_raw_command)
     
     hass.data.setdefault(DOMAIN, {})
 

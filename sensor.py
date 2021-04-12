@@ -73,9 +73,7 @@ class DenonNetworkSensor(Entity):
             _LOGGER.error("Client not configured for host %s and integration %s.", self._host, DOMAIN)
             return False
 
-        self._client = self.hass.data[DOMAIN][self._host]['client']
-        self._client.add_listener(self.client_data_received)
-
+        self.hass.data[DOMAIN][self._host]['client'].add_listener(self.client_data_received)
 
     def client_data_received(self, key, value, client):
         _LOGGER.debug("Data updated: %s = %s", key, value)

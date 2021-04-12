@@ -29,7 +29,7 @@ async def async_setup(hass, config):
             client = hass.data[DOMAIN][host]['client']
             client.send('{0}\r'.format(command).encode('utf-8'))
 
-    await hass.services.async_register(DOMAIN, "raw_command", handle_raw_command)
+    hass.services.async_register(DOMAIN, "raw_command", handle_raw_command)
     
     hass.data.setdefault(DOMAIN, {})
 

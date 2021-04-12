@@ -47,7 +47,7 @@ async def async_setup(hass, config):
                 hass.data[DOMAIN][host] = {
                     'client': client
                 }
-                asyncio.get_event_loop().run_until_complete(client.async_added_to_hass(hass))
+                await client.async_added_to_hass(hass)
 
         _LOGGER.info('Data: %s', hass.data[DOMAIN])
 

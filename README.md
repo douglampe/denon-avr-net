@@ -142,10 +142,10 @@ light:
         level_prefix: Z3
         min: 0
         max: 99
-      - name: Test Zone 3 power and center channel volume
+      - name: Center Channel Power and Level
         icon: hass:speaker
-        on_command: ZMON
-        off_command: ZMOFF
+        on_command: SSSPCCEN SMA
+        off_command: SSSPCCEN NON
         level_prefix: CVC
         space_after_prefix: true
         min: 38

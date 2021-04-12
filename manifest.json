@@ -1,6 +1,7 @@
 {
   "domain": "denon_avr_net",
   "name": "Denon AVR Network Receivers - TCP/IP Control",
+  "version": "1.0.0",
   "documentation": "https://github.com/douglampe/denon-avr-net",
   "requirements": [],
   "codeowners": ["@douglampe"]

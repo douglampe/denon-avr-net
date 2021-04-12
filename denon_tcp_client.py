@@ -75,7 +75,7 @@ class DenonTcpClient(asyncio.Protocol):
     async def _handle_error(self):
         """Handle error for TCP/IP connection."""
         await asyncio.sleep(5)
-            
+        
     def connection_made(self, transport):
         _LOGGER.debug('Connection established at %s:%s: %s', self.host, self.port, transport)
 
@@ -99,7 +99,9 @@ class DenonTcpClient(asyncio.Protocol):
                 except Exception as err:
                     _LOGGER.error('Error invoking raw listener: %s', err)
 
-            self.set_state('raw_command', token)
+            if token != '':
+                self.set_state('raw_command', token)
+            
             self.parse(token)
 
     def send(self, data):

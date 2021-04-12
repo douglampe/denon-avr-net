@@ -41,6 +41,8 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         port,
     )
 
+    hass.services.register(DOMAIN, "raw_command", sensor.handle_raw_command)
+
     async_add_entities([sensor], True)
 
 
@@ -72,7 +74,10 @@ class DenonNetworkSensor(Entity):
         if 'client' not in self.hass.data[DOMAIN][self._host]:
             _LOGGER.error("Client not configured for host %s and integration %s.", self._host, DOMAIN)
             return False
-        self.hass.data[DOMAIN][self._host]['client'].add_listener(self.client_data_received)
+
+        self._client = self.hass.data[DOMAIN][self._host]['client']
+        self._client.add_listener(self.client_data_received)
+
 
     def client_data_received(self, key, value, client):
         _LOGGER.debug("Data updated: %s = %s", key, value)
@@ -81,6 +86,9 @@ class DenonNetworkSensor(Entity):
         else:
             self._attributes[key] = value
         self.async_write_ha_state()
+
+    def handle_raw_command(call):
+        self._client.handle_raw_command(call)
 
     @property
     def name(self):

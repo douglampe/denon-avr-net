@@ -148,7 +148,7 @@ light:
 This integration also supports a sensor which has a state matching the main power/standby status of the AVR. Additional
 supported data is returned as attributes for the sensor. This is a somewhat experimental integration so, it is 
 recommended to setup the sensor first. This will allow you to determine the codes for sources and commands for 
-switches.
+switches. The latest command processed by the AVR is stored in the attribute `raw_command`.
 
 ```
 sensor:
@@ -156,3 +156,12 @@ sensor:
     name: Denon AVR Net Sensor
     host: my.local.ip.address
 ```
+
+## Service
+This integration provides a single service named `raw_command`. This service sends a raw command to the AVR and appends
+`\r` to the command. Se below for an example service call which turns the main zone power on:
+
+service: denon_avr_net.raw_command
+data:
+  host: 192.168.1.34
+  command: ZMON

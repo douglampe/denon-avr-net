@@ -1,17 +1,16 @@
-"""Support for reading data for a Denon AVR via TCP/IP."""
+"""Sensor for reading data for a Denon AVR via TCP/IP."""
 import asyncio
 import logging
 
-import voluptuous as vol
-
-from homeassistant.components.sensor import PLATFORM_SCHEMA
-from homeassistant.const import CONF_NAME, CONF_VALUE_TEMPLATE, EVENT_HOMEASSISTANT_STOP
-from homeassistant.core import callback
 import homeassistant.helpers.config_validation as cv
+import voluptuous as vol
+from homeassistant.components.sensor import PLATFORM_SCHEMA
+from homeassistant.const import (CONF_NAME, CONF_VALUE_TEMPLATE,
+                                 EVENT_HOMEASSISTANT_STOP)
+from homeassistant.core import callback
 from homeassistant.helpers.entity import Entity
 
-from . import DenonTcpClient
-from . import DOMAIN
+from . import DOMAIN, DenonTcpClient
 
 _LOGGER = logging.getLogger(__name__)
 

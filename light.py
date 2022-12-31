@@ -1,14 +1,17 @@
-"oas""Support for reading data for a Denon AVR via TCP/IP."""
+"""Light Entity for a Denon AVR via TCP/IP."""
 import asyncio
 import logging
 
 import voluptuous as vol
-
-from homeassistant.components.light import PLATFORM_SCHEMA, SUPPORT_BRIGHTNESS, ATTR_BRIGHTNESS, VALID_BRIGHTNESS
-from homeassistant.const import CONF_NAME, STATE_ON, STATE_OFF, SERVICE_TURN_ON
-from homeassistant.const import CONF_HOST, CONF_PORT, CONF_LIGHTS, CONF_ICON
+from homeassistant.components.light import (ATTR_BRIGHTNESS, PLATFORM_SCHEMA,
+                                            SUPPORT_BRIGHTNESS,
+                                            VALID_BRIGHTNESS)
+from homeassistant.const import (CONF_HOST, CONF_ICON, CONF_LIGHTS, CONF_NAME,
+                                 CONF_PORT, SERVICE_TURN_ON, STATE_OFF,
+                                 STATE_ON)
 from homeassistant.core import callback
-from homeassistant.helpers import config_validation as cv, entity_platform, service
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import entity_platform, service
 
 from . import DOMAIN
 from .switch import DenonNetworkSwitch

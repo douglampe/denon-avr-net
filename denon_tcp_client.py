@@ -1,3 +1,4 @@
+"""TCP/IP Client for interfacing with a Denon AVR"""
 import asyncio
 import logging
 

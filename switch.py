@@ -1,18 +1,17 @@
-"""Support for reading data for a Denon AVR via TCP/IP."""
+"""Switch Entitye for Denon AVR via TCP/IP."""
 import asyncio
 import logging
 
-import voluptuous as vol
-
-from homeassistant.components.switch import PLATFORM_SCHEMA
-from homeassistant.const import CONF_NAME, CONF_VALUE_TEMPLATE, EVENT_HOMEASSISTANT_STOP, STATE_ON, STATE_OFF
-from homeassistant.const import CONF_HOST, CONF_PORT, CONF_SOURCE, CONF_TYPE, CONF_SWITCHES, CONF_ICON
-from homeassistant.core import callback
 import homeassistant.helpers.config_validation as cv
-from homeassistant.components.switch import SwitchEntity
+import voluptuous as vol
+from homeassistant.components.switch import PLATFORM_SCHEMA, SwitchEntity
+from homeassistant.const import (CONF_HOST, CONF_ICON, CONF_NAME, CONF_PORT,
+                                 CONF_SOURCE, CONF_SWITCHES, CONF_TYPE,
+                                 CONF_VALUE_TEMPLATE, EVENT_HOMEASSISTANT_STOP,
+                                 STATE_OFF, STATE_ON)
+from homeassistant.core import callback
 
-from . import DOMAIN
-from . import DenonTcpClient
+from . import DOMAIN, DenonTcpClient
 
 _LOGGER = logging.getLogger(__name__)
 

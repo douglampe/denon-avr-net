@@ -159,27 +159,27 @@ class DenonTcpClient(asyncio.Protocol):
             self.set_state(key, state)
         # Parse mute
         elif state == 'MUON' or state == 'MUOFF':
-            self.set_state('{0}_mute'.format(key), state[2:])
+            self.set_state(f"{key}_mute", state[2:])
         # Parse quick select
         elif state.startswith('QUICK'):
-            self.set_state('{0}_quick'.format(key), state[-1:])
+            self.set_state(f"{key}_quick", state[-1:])
         # Parse channel setting
         elif state.startswith('CS'):
-            self.set_zone_state('{0}_ch_set'.format(key), state[2:])
+            self.set_zone_state(f"{key}_ch_set", state[2:])
         # Parse channel volume
         elif state.startswith('CV'):
             if state != 'CVEND' and ' ' in state:
                 # Parse channel volume
-                self.set_state('{0}_ch_vol_{1}'.format(key, state[2:].split()[0]), state[2:].split()[1])
+                self.set_state(f"{key}_ch_vol_{state[2:].split()[0]}", state[2:].split()[1])
         # Parse HPF
         elif state.startswith('HPF'):
-            self.set_state('{0}_hpf'.format(key), state[3:])
+            self.set_state(f"{key}_hpf", state[3:])
         # Parse Zone2/3 volume
         elif state.isnumeric() == True:
-            self.set_state(key + '_vol', state)
+            self.set_state(f"{key}_vol", state)
         # Otherwise this is source
         else:
-            self.set_state(key + '_source', state)
+            self.set_state(f"{key}_source", state)
 
     def request_status(self):
         self.send(b'PW?\r')

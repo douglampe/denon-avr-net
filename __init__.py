@@ -27,7 +27,7 @@ async def async_setup(hass, config):
         if host != DEFAULT_HOST:
             command = call.data.get(ATTR_COMMAND, DEFAULT_COMMAND)
             client = hass.data[DOMAIN][host]['client']
-            client.send('{0}\r'.format(command).encode('utf-8'))
+            client.send(f"{command}\r".encode('utf-8'))
 
     hass.services.async_register(DOMAIN, "raw_command", handle_raw_command)
     

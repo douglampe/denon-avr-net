@@ -66,10 +66,10 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         if zone == 1:
             prefix = "SI"
         else:
-            prefix = "Z{0}".format(zone)
+            prefix = f"Z{zone}"
         
-        on_command = "{0}{1}".format(prefix, source)
-        off_command = "{0}?".format(prefix)
+        on_command = f"{prefix}{source}"
+        off_command = f"{prefix}?"
 
         _LOGGER.debug("Switch config found: on command: %s; off command: %s", on_command, off_command)
 
@@ -151,7 +151,7 @@ class DenonNetworkSwitch(SwitchEntity):
             self._client.add_raw_listener(self.client_raw_data_received)
 
     def client_data_received(self, key, value, client):
-        if key == "zone{0}_source".format(self._zone):
+        if key == f"zone{self._zone}_source":
             if value == self._source:
                 self._state = STATE_ON
             else:
@@ -212,8 +212,8 @@ class DenonNetworkSwitch(SwitchEntity):
 
     def turn_on(self):
         """Turn on the switch"""
-        self._client.send('{0}\r'.format(self._on_command).encode('utf-8'))
+        self._client.send(f"{self._on_command}\r".encode('utf-8'))
     
     def turn_off(self):
         """Turn off the switch"""
-        self._client.send('{0}\r'.format(self._off_command).encode('utf-8'))
+        self._client.send(f"{self._off_command}\r".encode('utf-8'))

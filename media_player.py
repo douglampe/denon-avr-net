@@ -250,10 +250,10 @@ class DenonNetworkMediaPlayer(MediaPlayerEntity):
         return self._volume
 
     def volume_up(self):
-        self._client.send('{0}\r'.format(self._vol_up_command).encode('utf-8'))
+        self._client.send(f"{self._vol_up_command}\r".encode('utf-8'))
 
     def volume_down(self):
-        self._client.send('{0}\r'.format(self._vol_down_command).encode('utf-8'))
+        self._client.send(f"{self._vol_down_command}\r".encode('utf-8'))
 
     def set_volume_level(self, volume):
         raw_value = int(volume * (self._max - self._min) + self._min)
@@ -261,7 +261,7 @@ class DenonNetworkMediaPlayer(MediaPlayerEntity):
             raw_value = self._max
         elif raw_value < self._min:
             raw_value = self._min
-        self._client.send('{0}{1:02d}\r'.format(self._vol_prefix, raw_value).encode('utf-8'))
+        self._client.send(f"{self._vol_prefix}{raw_value:02d}\r".encode('utf-8'))
 
     @property
     def icon(self):
@@ -277,20 +277,20 @@ class DenonNetworkMediaPlayer(MediaPlayerEntity):
 
     def turn_on(self):
         """Turn on the switch"""
-        self._client.send('{0}\r'.format(self._on_command).encode('utf-8'))
+        self._client.send(f"{self._on_command}\r".encode('utf-8'))
     
     def turn_off(self):
         """Turn off the switch"""
-        self._client.send('{0}\r'.format(self._off_command).encode('utf-8'))
+        self._client.send(f"{self._off_command}\r".encode('utf-8'))
     
     def set_volume(self, volume):
         self._volume = volume
 
     def mute_volume(self, mute):
         if mute == True:
-            self._client.send('{0}\r'.format(self._mute_on_command).encode('utf-8'))
+            self._client.send(f"{self._mute_on_command}\r".encode('utf-8'))
         else:
-            self._client.send('{0}\r'.format(self._mute_off_command).encode('utf-8'))
+            self._client.send(f"{self._mute_off_command}\r".encode('utf-8'))
 
     def select_source(self, source):
-        self._client.send('{0}{1}\r'.format(self._source_prefix, self._sources[source] if source in self._sources else '?').encode('utf-8'))
+        self._client.send(f"{self._source_prefix}{self._sources[source] if source in self._sources else '?'}\r".encode('utf-8'))

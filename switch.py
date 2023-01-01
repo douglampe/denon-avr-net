@@ -9,7 +9,9 @@ from homeassistant.const import (CONF_HOST, CONF_ICON, CONF_NAME, CONF_PORT,
                                  CONF_SOURCE, CONF_SWITCHES, CONF_TYPE,
                                  CONF_VALUE_TEMPLATE, EVENT_HOMEASSISTANT_STOP,
                                  STATE_OFF, STATE_ON)
-from homeassistant.core import callback
+from homeassistant.core import callback, HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType, ServiceCall
 
 from . import DOMAIN, DenonTcpClient
 
@@ -49,7 +51,12 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     }
 )
 
-async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
+async def async_setup_platform(
+    hass: HomeAssistant, 
+    config: ConfigType, 
+    async_add_entities: AddEntitiesCallback, 
+    discovery_info: DiscoveryInfoType | None = None
+) -> None:
     """Set up the Denon AVR Switch platform."""
     host = config.get(CONF_HOST)
     port = config.get(CONF_PORT)
@@ -104,18 +111,30 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 
 class DenonNetworkSwitch(SwitchEntity):
     """Representation of a Denon AVR as a Switch via TCP/IP."""
+    _name: str
+    _state: str
+    _host: str
+    _port: int
+    _on_command: str
+    _off_command: str
+    _icon: str
+    _zone: str
+    _source: str
+    _network_loop_task: any
+    _attributes: dict
+    _client: DenonTcpClient
 
     def __init__(
         self,
-        name,
-        host,
-        port,
-        on_command,
-        off_command,
-        icon,
-        zone,
-        source
-    ):
+        name: str,
+        host: str,
+        port: int,
+        on_command: str,
+        off_command: str,
+        icon: str,
+        zone: str,
+        source: str
+    ) -> None:
         """Initialize the network client."""
         self._name = name
         self._state = None
@@ -132,7 +151,7 @@ class DenonNetworkSwitch(SwitchEntity):
 
         _LOGGER.debug("Switch configured: on command: %s; off command: %s", self._on_command, self._off_command)
         
-    async def async_added_to_hass(self):
+    async def async_added_to_hass(self) -> None:
         """Handle when an entity is about to be added to Home Assistant."""
         if DOMAIN not in self.hass.data:
             _LOGGER.error("Integration %s is not configured.", DOMAIN)
@@ -150,7 +169,7 @@ class DenonNetworkSwitch(SwitchEntity):
         else:
             self._client.add_raw_listener(self.client_raw_data_received)
 
-    def client_data_received(self, key, value, client):
+    def client_data_received(self, key: str, value: str, client: DenonTcpClient) -> None:
         if key == f"zone{self._zone}_source":
             if value == self._source:
                 self._state = STATE_ON
@@ -159,7 +178,7 @@ class DenonNetworkSwitch(SwitchEntity):
             _LOGGER.debug("State updated (%s): %s", self._name, self._state)
         self.async_write_ha_state()
         
-    def client_raw_data_received(self, data, client):
+    def client_raw_data_received(self, data: str, client: DenonTcpClient) -> None:
         updated = False
         if data == '':
             return
@@ -174,46 +193,46 @@ class DenonNetworkSwitch(SwitchEntity):
             self.async_write_ha_state()
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Return the name of the switch."""
         return self._name
 
     @property
-    def should_poll(self):
+    def should_poll(self) -> bool:
         """No polling needed."""
         return False
 
     @property
-    def device_state_attributes(self):
+    def device_state_attributes(self) -> dict:
         """Return the attributes of the entity (if any JSON present)."""
         return self._attributes
 
     @property
-    def state(self):
+    def state(self) -> str:
         """Return the state of the switch."""
         return self._state
 
     @property
-    def is_on(self):
+    def is_on(self) -> bool:
         """Return True if switch is on."""
         return self._state == STATE_ON
 
     @property
-    def icon(self):
+    def icon(self) -> str:
         return self._icon
 
     @property
-    def on_command(self):
+    def on_command(self) -> str:
         return self._on_command
 
     @property
-    def off_command(self):
+    def off_command(self) -> str:
         return self._off_command
 
-    def turn_on(self):
+    def turn_on(self) -> None:
         """Turn on the switch"""
         self._client.send(f"{self._on_command}\r".encode('utf-8'))
     
-    def turn_off(self):
+    def turn_off(self) -> None:
         """Turn off the switch"""
         self._client.send(f"{self._off_command}\r".encode('utf-8'))

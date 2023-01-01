@@ -7,8 +7,10 @@ import voluptuous as vol
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.const import (CONF_NAME, CONF_VALUE_TEMPLATE,
                                  EVENT_HOMEASSISTANT_STOP)
-from homeassistant.core import callback
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import Entity
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType, ServiceCall
 
 from . import DOMAIN, DenonTcpClient
 
@@ -28,7 +30,12 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     }
 )
 
-async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
+async def async_setup_platform(
+    hass: HomeAssistant, 
+    config: ConfigType, 
+    async_add_entities: AddEntitiesCallback, 
+    discovery_info: DiscoveryInfoType | None = None
+) -> None:
     """Set up the Denon AVR sensor platform."""
     name = config.get(CONF_NAME)
     host = config.get(CONF_HOST)
@@ -42,16 +49,21 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 
     async_add_entities([sensor], True)
 
-
 class DenonNetworkSensor(Entity):
     """Representation of a Denon AVR as a sensor via TCP/IP."""
+    _name: str
+    _state: str
+    _host: str
+    _port: int
+    _network_loop_task: any
+    _attributes: dict
 
     def __init__(
         self,
-        name,
-        host,
-        port,
-    ):
+        name: str,
+        host: str,
+        port: int,
+    ) -> None:
         """Initialize the network sensor."""
         self._name = name
         self._state = None
@@ -60,7 +72,7 @@ class DenonNetworkSensor(Entity):
         self._network_loop_task = None
         self._attributes = {}
 
-    async def async_added_to_hass(self):
+    async def async_added_to_hass(self) -> None:
         """Handle when an entity is about to be added to Home Assistant."""
         if DOMAIN not in self.hass.data:
             _LOGGER.error("Integration %s is not configured.", DOMAIN)
@@ -74,7 +86,7 @@ class DenonNetworkSensor(Entity):
 
         self.hass.data[DOMAIN][self._host]['client'].add_listener(self.client_data_received)
 
-    def client_data_received(self, key, value, client):
+    def client_data_received(self, key: str, value: str, client: DenonTcpClient) -> None:
         _LOGGER.debug("Data updated: %s = %s", key, value)
         if key == "power":
             self._state = value.lower()
@@ -83,21 +95,21 @@ class DenonNetworkSensor(Entity):
         self.async_write_ha_state()
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Return the name of the sensor."""
         return self._name
 
     @property
-    def should_poll(self):
+    def should_poll(self) -> bool:
         """No polling needed."""
         return False
 
     @property
-    def device_state_attributes(self):
+    def device_state_attributes(self) -> dict:
         """Return the attributes of the entity (if any JSON present)."""
         return self._attributes
 
     @property
-    def state(self):
+    def state(self) -> str:
         """Return the state of the sensor."""
         return self._state

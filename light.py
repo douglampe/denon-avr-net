@@ -6,14 +6,17 @@ import voluptuous as vol
 from homeassistant.components.light import (ATTR_BRIGHTNESS, PLATFORM_SCHEMA,
                                             SUPPORT_BRIGHTNESS,
                                             VALID_BRIGHTNESS)
+from homeassistant.components.switch import SwitchEntity
 from homeassistant.const import (CONF_HOST, CONF_ICON, CONF_LIGHTS, CONF_NAME,
                                  CONF_PORT, SERVICE_TURN_ON, STATE_OFF,
                                  STATE_ON)
-from homeassistant.core import callback
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import entity_platform, service
+from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType, ServiceCall
 
-from . import DOMAIN
+from . import DOMAIN, DenonTcpClient
 from .switch import DenonNetworkSwitch
 
 _LOGGER = logging.getLogger(__name__)
@@ -49,7 +52,12 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     }
 )
 
-async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
+async def async_setup_platform(
+    hass: HomeAssistant, 
+    config: ConfigType, 
+    async_add_entities: AddEntitiesCallback, 
+    discovery_info: DiscoveryInfoType | None = None
+) -> None:
     """Set up the Denon AVR Switch platform."""
     host = config.get(CONF_HOST)
     port = config.get(CONF_PORT)
@@ -84,25 +92,36 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 
     async_add_entities(entities, True)
 
-async def denon_avr_light_brightness(entity, service_call):
+async def denon_avr_light_brightness(entity: SwitchEntity, service_call: ServiceCall) -> None:
     await entity.set_brightness(service_call.data['brightness'])
 
 class DenonNetworkLight(DenonNetworkSwitch):
     """Representation of a Denon AVR as a Switch via TCP/IP."""
+    _state: str
+    _host: str
+    _port: int
+    _level_prefix: str
+    _min: int
+    _max: int
+    _network_loop_task: any
+    _client: any
+    _brightness: int
+    _attributes: dict
+    _space_after_prefix: bool
 
     def __init__(
         self,
-        name,
-        host,
-        port,
-        on_command,
-        off_command,
-        level_prefix,
-        min,
-        max,
-        icon,
-        space_after_prefix
-    ):
+        name: str,
+        host: str,
+        port: int,
+        on_command: str,
+        off_command: str,
+        level_prefix: str,
+        min: int,
+        max: int,
+        icon: str,
+        space_after_prefix: bool
+    ) -> None:
         """Initialize the switch."""
         self._state = None
         self._host = host
@@ -120,7 +139,7 @@ class DenonNetworkLight(DenonNetworkSwitch):
 
         _LOGGER.debug("Switch configured: on command: %s; off command: %s", self.on_command, self.off_command)
         
-    async def async_added_to_hass(self):
+    async def async_added_to_hass(self) -> bool | None:
         """Handle when an entity is about to be added to Home Assistant."""
         if DOMAIN not in self.hass.data:
             _LOGGER.error("Integration %s is not configured.", DOMAIN)
@@ -135,7 +154,7 @@ class DenonNetworkLight(DenonNetworkSwitch):
         self._client = self.hass.data[DOMAIN][self._host]['client']
         self._client.add_raw_listener(self.client_raw_data_received)
         
-    def client_raw_data_received(self, data, client):
+    def client_raw_data_received(self, data: str, client: DenonTcpClient) -> None:
         updated = False
         if data == '':
             return
@@ -156,21 +175,21 @@ class DenonNetworkLight(DenonNetworkSwitch):
             self.async_write_ha_state()
 
     @property
-    def supported_features(self):
+    def supported_features(self) -> any:
         """Return the supported features."""
         return SUPPORT_BRIGHTNESS
 
     @property
-    def brightness(self):
+    def brightness(self) -> int:
         """Retrun brightness"""
         return self._brightness
 
     @property
-    def device_state_attributes(self):
+    def device_state_attributes(self) -> dict:
         """Return the attributes of the entity (if any JSON present)."""
         return self._attributes
 
-    def turn_on(self, **kwargs):
+    def turn_on(self, **kwargs) -> None:
         DenonNetworkSwitch.turn_on(self)
         brightness = kwargs.get(ATTR_BRIGHTNESS, 255)
         if brightness != self._brightness:
@@ -179,12 +198,12 @@ class DenonNetworkLight(DenonNetworkSwitch):
             _LOGGER.debug('Sending command %s%s%s', self._level_prefix, ' ' if self._space_after_prefix else '', raw_value)
             self._client.send(f"{self._level_prefix}{' ' if self._space_after_prefix else ''}{raw_value:02d}\r".encode('utf-8'))
 
-    def set_brightness(self, brightness):
+    def set_brightness(self, brightness: int) -> None:
         _LOGGER.debug('Setting brightness to %s', brightness)
         self._brightness = brightness
         self.update()
     
-    def update(self):
+    def update(self) -> None:
         _attributes = {
             ATTR_BRIGHTNESS: self._brightness
         }

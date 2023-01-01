@@ -6,6 +6,7 @@ import asyncio
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.const import CONF_HOST, CONF_PORT, CONF_SWITCHES
+from homeassistant.helpers.typing import ConfigType
 
 from .denon_tcp_client import DenonTcpClient
 
@@ -18,10 +19,10 @@ DEFAULT_COMMAND = 'SI?'
 
 _LOGGER = logging.getLogger(__name__)
 
-async def async_setup(hass, config):
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
     @callback
-    def handle_raw_command(call):
+    def handle_raw_command(call) -> None:
         host = call.data.get(ATTR_HOST, DEFAULT_HOST)
 
         if host != DEFAULT_HOST:

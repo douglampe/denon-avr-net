@@ -1,65 +1,76 @@
 """TCP/IP Client for interfacing with a Denon AVR"""
 import asyncio
 import logging
+from typing import List
 
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP
-from homeassistant.core import callback
+from homeassistant.core import HomeAssistant, callback
 
 _LOGGER = logging.getLogger(__name__)
 
 class DenonTcpClient(asyncio.Protocol):
-    def __init__(self, host, port):
-        self.states = {}
-        self.commands = {}
-        self.queue = []
+    _network_loop_task: any
+    _states: dict
+    _commands: dict
+    _queue: List
+    _listeners: List
+    _raw_listeners: List
+    _host: str
+    _port: int
+    _loop: any
 
-        self.listeners = []
-        self.raw_listeners = []
-        self.host = host
-        self.port = port
-        self.loop = None
+    def __init__(self, host: str, port: int) -> None:
+        self._states = {}
+        self._commands = {}
+        self._queue = []
 
-    async def async_added_to_hass(self, hass):
+        self._listeners = []
+        self._raw_listeners = []
+        self._host = host
+        self._port = port
+        self._loop = None
+
+    async def async_added_to_hass(self, hass: HomeAssistant) -> None:
         """Handle when an entity is about to be added to Home Assistant."""
-        self.loop = hass.loop
+        self._loop = hass.loop
         self._network_loop_task = hass.loop.create_task(
             self.start()
         )
         hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, self.stop_network_read)
 
     @callback
-    def stop_network_read(self, event):
+    def stop_network_read(self, event) -> None:
         """Close resources."""
         if self._network_loop_task:
             self._network_loop_task.cancel()
 
-    async def start(self):
+    async def start(self) -> None:
         try:
-            _LOGGER.debug('Creating connection to %s:%s', self.host, self.port)
-            transport, _ = await self.loop.create_connection(
+            _LOGGER.debug('Creating connection to %s:%s', self._host, self._port)
+            transport, _ = await self._loop.create_connection(
                 lambda: self,
-                self.host,
-                self.port,
+                self._host,
+                self._port,
             )
         except Exception as exc:
             _LOGGER.exception(
                 "Unable to connect to the device at address %s:%s. Will retry. Error: %s",
-                self.host,
-                self.port,
+                self._host,
+                self._port,
                 exc,
             )
             await self._handle_error()
         else:
             while True:
                 try:
-                    on_con_lost = self.loop.create_future()
+                    on_con_lost = self._loop.create_future()
                     self.request_status()
                     await on_con_lost
                 except Exception as exc:
                     _LOGGER.exception(
                         "Error while reading device at address %s:%s. Error: %s", 
-                        self.host, 
-                        self.port, 
+                        self._host, 
+                        self._port, 
                         exc
                     )
                     await self._handle_error()
@@ -67,34 +78,34 @@ class DenonTcpClient(asyncio.Protocol):
                 finally:
                     transport.close()
     
-    def add_listener(self, listener):
-        self.listeners.append(listener)
+    def add_listener(self, listener) -> None:
+        self._listeners.append(listener)
 
-    def add_raw_listener(self, listener):
-        self.raw_listeners.append(listener)
+    def add_raw_listener(self, listener) -> None:
+        self._raw_listeners.append(listener)
 
-    async def _handle_error(self):
+    async def _handle_error(self) -> None:
         """Handle error for TCP/IP connection."""
         await asyncio.sleep(5)
         
-    def connection_made(self, transport):
-        _LOGGER.debug('Connection established at %s:%s: %s', self.host, self.port, transport)
+    def connection_made(self, transport) -> None:
+        _LOGGER.debug('Connection established at %s:%s: %s', self._host, self._port, transport)
 
         self.transport = transport
         
-        while self.queue:
-            self.send(self.queue.pop(0))
+        while self._queue:
+            self.send(self._queue.pop(0))
 
-    def connection_lost(self, exc):
+    def connection_lost(self, exc) -> None:
         _LOGGER.exception("Connection lost. Attempting to reconnect. Error: %s", exc)
-        self.loop.create_task(
+        self._loop.create_task(
             self.start()
         )
 
-    def data_received(self, data):
+    def data_received(self, data: bytes) -> None:
         _LOGGER.debug('Data received: %s', data.decode())
         for token in data.decode().split('\r'):
-            for listener in self.raw_listeners:
+            for listener in self._raw_listeners:
                 try:
                     listener(token, self)
                 except Exception as err:
@@ -105,29 +116,29 @@ class DenonTcpClient(asyncio.Protocol):
             
             self.parse(token)
 
-    def send(self, data):
+    def send(self, data: bytes) -> None:
         if hasattr(self, 'transport'):
             self.transport.write(data)
         else:
             _LOGGER.debug('No transport available. Queueing data: %s', repr(data))
-            self.queue.append(data)
+            self._queue.append(data)
 
-    def set_state(self, key, value):
-        self.states[key] = value
+    def set_state(self, key: str, value: str | int) -> None:
+        self._states[key] = value
         _LOGGER.debug('STATE SET: %s = %s', key, value)
-        for listener in self.listeners:
+        for listener in self._listeners:
             try:
                 listener(key, value, self)
             except Exception as err:
                 _LOGGER.error('Error invoking raw listener: %s', err)
     
-    def get_state(self, key):
-        if key in self.states:
-            return self.states[key]
+    def get_state(self, key: str) -> str | int:
+        if key in self._states:
+            return self._states[key]
         else:
             return ''
 
-    def parse(self, data):
+    def parse(self, data: str) -> None:
         # Parse zone state
         if data.startswith('PW'):
             self.set_state('power', data[2:])
@@ -153,7 +164,7 @@ class DenonTcpClient(asyncio.Protocol):
         elif data.startswith('SV'):
             self.set_state('video_select', data[2:])
         
-    def set_zone_state(self, key, state):
+    def set_zone_state(self, key: str, state: str) -> None:
         # Parse zone state
         if state == 'ON' or state == 'OFF':
             self.set_state(key, state)
@@ -181,7 +192,7 @@ class DenonTcpClient(asyncio.Protocol):
         else:
             self.set_state(f"{key}_source", state)
 
-    def request_status(self):
+    def request_status(self) -> None:
         self.send(b'PW?\r')
         self.send(b'MV?\r')
         self.send(b'CV?\r')

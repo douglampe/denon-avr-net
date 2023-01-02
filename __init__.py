@@ -1,11 +1,11 @@
 """The denon_avr_net component."""
-import logging
-import json
 import asyncio
+import json
+import logging
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant, callback
 from homeassistant.const import CONF_HOST, CONF_PORT, CONF_SWITCHES
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.typing import ConfigType
 
 from .denon_tcp_client import DenonTcpClient

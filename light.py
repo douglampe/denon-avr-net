@@ -11,10 +11,11 @@ from homeassistant.const import (CONF_HOST, CONF_ICON, CONF_LIGHTS, CONF_NAME,
                                  CONF_PORT, SERVICE_TURN_ON, STATE_OFF,
                                  STATE_ON)
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import entity_platform, service
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType, ServiceCall
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.typing import (ConfigType, DiscoveryInfoType,
+                                          ServiceCall)
 
 from . import DOMAIN, DenonTcpClient
 from .switch import DenonNetworkSwitch

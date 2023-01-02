@@ -10,7 +10,8 @@ from homeassistant.const import (CONF_NAME, CONF_VALUE_TEMPLATE,
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType, ServiceCall
+from homeassistant.helpers.typing import (ConfigType, DiscoveryInfoType,
+                                          ServiceCall)
 
 from . import DOMAIN, DenonTcpClient
 
